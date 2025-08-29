@@ -434,6 +434,21 @@
             .mobile-nav {
                 display: none;
             }
+
+            /* Hide nav item text on desktop, show only icons */
+            .nav-item span {
+                display: none;
+            }
+
+            .nav-item {
+                justify-content: center;
+                padding: 14px;
+            }
+
+            .nav-item i {
+                width: auto;
+                font-size: 24px;
+            }
         }
 
         @media (min-width: 1024px) {
@@ -451,6 +466,16 @@
             
             .quick-actions {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            /* Show nav item text on larger desktop screens */
+            .nav-item span {
+                display: inline;
+            }
+
+            .nav-item i {
+                width: 20px;
+                font-size: 18px;
             }
         }
     </style>
