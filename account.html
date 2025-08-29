@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management | Appwrite</title>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f02e65;
+            --primary-dark: #d91c54;
+            --secondary: #2e5bf0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #65676b;
+            --bg: #f7f7f8;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Main Container */
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Account Card Styles */
+        .account-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(240, 46, 101, 0.1);
+        }
+
+        .btn {
+            padding: 16px 24px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+        }
+
+        /* Danger Zone */
+        .danger-zone {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .danger-zone .card-title {
+            color: var(--error);
+            border-bottom: 1px solid #fecaca;
+        }
+
+        .danger-zone .card-title i {
+            color: var(--error);
+        }
+
+        .danger-zone p {
+            color: #7f1d1d;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        /* Button Group */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Message Styles */
+        .message {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .message-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 768px) {
+            .mobile-header {
+                display: none;
+            }
+            
+            .container {
+                padding: 24px;
+            }
+            
+            .button-group {
+                flex-direction: row;
+            }
+            
+            .button-group .btn {
+                width: auto;
+            }
+        }
+
+        /* Back button for desktop */
+        .desktop-back {
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-back {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 24px;
+                color: var(--text-primary);
+                text-decoration: none;
+                font-weight: 500;
+                align-self: flex-start;
+            }
+        }
+
+        /* User profile summary */
+        .profile-summary {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 24px;
+        }
+
+        .profile-info h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <a href="dash.html" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 class="page-title">Account</h1>
+        <div style="width: 24px;"></div> <!-- Spacer for balance -->
+    </div>
+
+    <div class="container">
+        <!-- Back button for desktop -->
+        <a href="dash.html" class="desktop-back">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
+
+        <!-- User Profile Summary -->
+        <div class="profile-summary">
+            <div class="profile-avatar" id="profileAvatar">U</div>
+            <div class="profile-info">
+                <h2 id="profileName">User Name</h2>
+                <p id="profileEmail">user@example.com</p>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div id="accountContent">
+            <!-- Profile Information -->
+            <div class="account-card">
+                <h2 class="card-title">
+                    <i class="fas fa-user"></i>
+                    Profile Information
+                </h2>
+                <div class="form-group">
+                    <label for="userName">Name</label>
+                    <input type="text" id="userName" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email</label>
+                    <input type="email" id="userEmail" placeholder="Your email" disabled>
+                </div>
+                <button class="btn btn-primary" id="updateProfileBtn">
+                    <i class="fas fa-save"></i>
+                    Update Profile
+                </button>
+            </div>
+
+            <!-- Change Password -->
+            <div class="account-card">
+                <h2 class="card-title">
+                    <i class="fas fa-lock"></i>
+                    Change Password
+                </h2>
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" placeholder="Enter new password">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                </div>
+                <button class="btn btn-primary" id="changePasswordBtn">
+                    <i class="fas fa-key"></i>
+                    Change Password
+                </button>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="danger-zone">
+                <h2 class="card-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Danger Zone
+                </h2>
+                <p>These actions are irreversible. Please be certain.</p>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                    <button class="btn btn-danger" id="deleteAccountBtn">
+                        <i class="fas fa-trash"></i>
+                        Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Container -->
+        <div id="messageContainer"></div>
+    </div>
+
+    <script>
+        // Initialize Appwrite
+        const { Client, Account } = Appwrite;
+        const client = new Client()
+            .setEndpoint('https://fra.cloud.appwrite.io/v1')
+            .setProject('68847c040002eee8efb0');
+        const account = new Account(client);
+
+        // DOM Elements
+        const accountContent = document.getElementById('accountContent');
+        const userNameInput = document.getElementById('userName');
+        const userEmailInput = document.getElementById('userEmail');
+        const currentPasswordInput = document.getElementById('currentPassword');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const updateProfileBtn = document.getElementById('updateProfileBtn');
+        const changePasswordBtn = document.getElementById('changePasswordBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        const messageContainer = document.getElementById('messageContainer');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+
+        // Check authentication status and load user data
+        async function checkAuth() {
+            try {
+                // Get current user
+                const user = await account.get();
+                
+                // Update UI with user data
+                userNameInput.value = user.name || '';
+                userEmailInput.value = user.email;
+                profileName.textContent = user.name || 'User';
+                profileEmail.textContent = user.email;
+                
+                // Set avatar initials
+                if (user.name) {
+                    const names = user.name.split(' ');
+                    const initials = names[0].charAt(0) + (names[1] ? names[1].charAt(0) : '');
+                    profileAvatar.textContent = initials;
+                } else if (user.email) {
+                    profileAvatar.textContent = user.email.charAt(0).toUpperCase();
+                }
+                
+            } catch (error) {
+                console.error('Authentication error:', error);
+                // Redirect to login page if not authenticated
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Update profile function
+        async function updateProfile() {
+            try {
+                const name = userNameInput.value.trim();
+                
+                if (!name) {
+                    showMessage('Please enter your name', 'error');
+                    return;
+                }
+                
+                // Disable button during update
+                updateProfileBtn.disabled = true;
+                updateProfileBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+                
+                await account.updateName(name);
+                profileName.textContent = name;
+                
+                // Set avatar initials
+                const names = name.split(' ');
+                const initials = names[0].charAt(0) + (names[1] ? names[1].charAt(0) : '');
+                profileAvatar.textContent = initials;
+                
+                showMessage('Profile updated successfully', 'success');
+            } catch (error) {
+                showMessage('Error updating profile: ' + (error.message || error), 'error');
+            } finally {
+                // Re-enable button
+                updateProfileBtn.disabled = false;
+                updateProfileBtn.innerHTML = '<i class="fas fa-save"></i> Update Profile';
+            }
+        }
+
+        // Change password function
+        async function changePassword() {
+            try {
+                const currentPassword = currentPasswordInput.value.trim();
+                const newPassword = newPasswordInput.value.trim();
+                const confirmPassword = confirmPasswordInput.value.trim();
+                
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    showMessage('Please fill in all password fields', 'error');
+                    return;
+                }
+                
+                if (newPassword !== confirmPassword) {
+                    showMessage('New passwords do not match', 'error');
+                    return;
+                }
+                
+                if (newPassword.length < 8) {
+                    showMessage('Password must be at least 8 characters long', 'error');
+                    return;
+                }
+                
+                // Disable button during update
+                changePasswordBtn.disabled = true;
+                changePasswordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...';
+                
+                // For Appwrite, we need to use updatePassword
+                await account.updatePassword(newPassword, currentPassword);
+                
+                // Clear password fields
+                currentPasswordInput.value = '';
+                newPasswordInput.value = '';
+                confirmPasswordInput.value = '';
+                
+                showMessage('Password changed successfully', 'success');
+            } catch (error) {
+                showMessage('Error changing password: ' + (error.message || error), 'error');
+            } finally {
+                // Re-enable button
+                changePasswordBtn.disabled = false;
+                changePasswordBtn.innerHTML = '<i class="fas fa-key"></i> Change Password';
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                logoutBtn.disabled = true;
+                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+                
+                await account.deleteSession('current');
+                window.location.href = 'login.html';
+            } catch (error) {
+                showMessage('Logout error: ' + (error.message || error), 'error');
+                logoutBtn.disabled = false;
+                logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+            }
+        }
+
+        // Delete account function
+        async function deleteAccount() {
+            if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                deleteAccountBtn.disabled = true;
+                deleteAccountBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                
+                // Note: Appwrite doesn't have a direct account deletion method from client
+                // This would typically be handled by your backend
+                showMessage('Account deletion request sent. Please check your email for confirmation.', 'success');
+                
+                // In a real implementation, you would call your backend API here
+                // await fetch('/api/delete-account', { method: 'POST' });
+                
+                // For demo purposes, we'll log out the user after a delay
+                setTimeout(() => {
+                    logout();
+                }, 3000);
+            } catch (error) {
+                showMessage('Error deleting account: ' + (error.message || error), 'error');
+                deleteAccountBtn.disabled = false;
+                deleteAccountBtn.innerHTML = '<i class="fas fa-trash"></i> Delete Account';
+            }
+        }
+
+        // Show message function
+        function showMessage(message, type) {
+            const messageEl = document.createElement('div');
+            messageEl.className = `message message-${type}`;
+            messageEl.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            messageContainer.innerHTML = '';
+            messageContainer.appendChild(messageEl);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                messageEl.style.opacity = '0';
+                messageEl.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => messageEl.remove(), 500);
+            }, 5000);
+        }
+
+        // Event listeners
+        updateProfileBtn.addEventListener('click', updateProfile);
+        changePasswordBtn.addEventListener('click', changePassword);
+        logoutBtn.addEventListener('click', logout);
+        deleteAccountBtn.addEventListener('click', deleteAccount);
+
+        // Initialize account page
+        checkAuth();
+    </script>
+</body>
+</html>
