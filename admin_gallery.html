@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Admin | Categories</title>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f02e65;
+            --primary-dark: #d91c54;
+            --secondary: #2e5bf0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #65676b;
+            --bg: #f7f7f8;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --sidebar-width: 280px;
+            --photos-color: #3b82f6;
+            --files-color: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .close-sidebar {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .create-category-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .create-category-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .categories-list {
+            list-style: none;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .category-item.photos-category {
+            border-left-color: var(--photos-color);
+        }
+
+        .category-item.files-category {
+            border-left-color: var(--files-color);
+        }
+
+        .category-item:hover {
+            background: rgba(240, 46, 101, 0.1);
+        }
+
+        .category-item.active {
+            background: rgba(240, 46, 101, 0.15);
+            font-weight: 600;
+        }
+
+        .category-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .photos-badge {
+            background: var(--photos-color);
+        }
+
+        .files-badge {
+            background: var(--files-color);
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .category-item:hover .category-actions {
+            opacity: 1;
+        }
+
+        .category-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 14px;
+            padding: 4px;
+        }
+
+        .category-action-btn:hover {
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .current-category {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .upload-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-title i {
+            color: var(--primary);
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .file-input {
+            padding: 20px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .file-input:hover {
+            border-color: var(--primary);
+            background: rgba(240, 46, 101, 0.05);
+        }
+
+        .file-input input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-input-content i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .file-list {
+            margin-top: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(240, 46, 101, 0.05);
+            border-radius: var(--radius-sm);
+        }
+
+        .file-name {
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 70%;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .file-type {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--bg);
+            color: var(--text-secondary);
+        }
+
+        .upload-progress {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .upload-btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s ease;
+            margin-top: 15px;
+        }
+
+        .upload-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .upload-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Batch Actions */
+        .batch-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .select-all-btn, .delete-selected-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .select-all-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+        }
+
+        .delete-selected-btn {
+            background: var(--error);
+            color: white;
+            display: none;
+        }
+
+        .delete-selected-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Messages Container */
+        #messageContainer {
+            margin-bottom: 20px;
+        }
+
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .gallery-card {
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            height: 150px;
+            position: relative;
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .gallery-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-card:hover .gallery-image img {
+            transform: scale(1.05);
+        }
+
+        .file-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .file-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: var(--files-color);
+        }
+
+        .file-card-name {
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease, background 0.2s ease;
+        }
+
+        .gallery-card:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: var(--error);
+        }
+
+        .image-checkbox {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 18px;
+            height: 18px;
+            z-index: 5;
+        }
+
+        /* Date Group */
+        .date-group {
+            margin-bottom: 30px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .date-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .delete-date-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .delete-date-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+            text-align: center;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: var(--radius);
+        }
+
+        .modal-info {
+            color: white;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: 400;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Category Modal */
+        .category-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .category-modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .category-modal-content {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .category-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .category-modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .category-modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .category-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .form-input {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 16px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .category-type-selector {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .category-type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .category-type-btn.active {
+            border-color: var(--primary);
+            background: rgba(240, 46, 101, 0.1);
+        }
+
+        .category-type-btn.photos-active {
+            border-color: var(--photos-color);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .category-type-btn.files-active {
+            border-color: var(--files-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .cancel-btn, .save-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .cancel-btn {
+            background: var(--bg);
+            color: var(--text-primary);
+        }
+
+        .save-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #d1d5db;
+        }
+
+        .empty-state p {
+            margin-bottom: 16px;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(240, 46, 101, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error Message */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Success Message */
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+                z-index: 1000;
+                box-shadow: var(--shadow-md);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .close-sidebar {
+                display: block;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .category-actions {
+                opacity: 1;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+
+        /* Animation enhancements */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Categories</h2>
+            <button class="close-sidebar" id="closeSidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <button class="create-category-btn" id="createCategoryBtn">
+            <i class="fas fa-plus"></i> Create New Category
+        </button>
+
+        <ul class="categories-list" id="categoriesList"></ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header -->
+        <header class="top-header">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 class="current-category" id="currentCategory">Select a Category</h2>
+            <div class="user-actions"></div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection" style="display: none;">
+                <h2 class="upload-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Upload New Files
+                </h2>
+                <div class="upload-form">
+                    <label class="file-input">
+                        <div class="file-input-content">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span id="uploadText">Click to select or drag & drop files</span>
+                            <small id="uploadSubtext">Supports multiple files</small>
+                        </div>
+                        <input type="file" id="fileInput" multiple>
+                    </label>
+                </div>
+                
+                <div id="fileList" class="file-list"></div>
+                
+                <div id="uploadProgress" class="upload-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+                
+                <button class="upload-btn" id="uploadBtn" disabled>
+                    <i class="fas fa-upload"></i>
+                    Upload All Files
+                </button>
+            </div>
+
+            <!-- Batch Actions -->
+            <div class="batch-actions" id="batchActions" style="display: none;">
+                <button class="select-all-btn" id="selectAllBtn">
+                    <i class="fas fa-check-square"></i> Select All
+                </button>
+                <button class="delete-selected-btn" id="deleteSelectedBtn">
+                    <i class="fas fa-trash"></i> Delete Selected
+                </button>
+            </div>
+
+            <!-- Messages Container -->
+            <div id="messageContainer"></div>
+
+            <!-- Gallery Container -->
+            <div id="galleryContainer">
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <p>No category selected</p>
+                    <small>Select a category from the sidebar to view or upload files</small>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Category Modal -->
+    <div class="category-modal" id="categoryModal">
+        <div class="category-modal-content">
+            <div class="category-modal-header">
+                <h3 class="category-modal-title" id="categoryModalTitle">Create Category</h3>
+                <button class="category-modal-close" id="categoryModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="category-form">
+                <div class="form-group">
+                    <label for="categoryName" class="form-label">Category Name</label>
+                    <input type="text" id="categoryName" class="form-input" placeholder="Enter category name">
+                    <div class="category-type-selector">
+                        <div class="category-type-btn photos-active" id="photosTypeBtn">
+                            <i class="fas fa-image"></i>
+                            <div>Photos Category</div>
+                            <small>Ends with _photos</small>
+                        </div>
+                        <div class="category-type-btn" id="filesTypeBtn">
+                            <i class="fas fa-file"></i>
+                            <div>Files Category</div>
+                            <small>Ends with _files</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="cancel-btn" id="cancelCategoryBtn">Cancel</button>
+                    <button class="save-btn" id="saveCategoryBtn">Save Category</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modalImage" src="" alt="Enlarged view">
+            <div id="modalInfo" class="modal-info"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Appwrite
+        const { Client, Storage, ID, Databases, Query } = Appwrite;
+        const client = new Client()
+            .setEndpoint('https://fra.cloud.appwrite.io/v1')
+            .setProject('68847c040002eee8efb0'); // Replace with your project ID
+        
+        const storage = new Storage(client);
+        const databases = new Databases(client);
+        
+        // Appwrite constants
+        const DATABASE_ID = '68847e4f000384e52608';
+        const CATEGORIES_COLLECTION_ID = 'categories';
+        const IMAGES_COLLECTION_ID = 'images';
+        const STORAGE_BUCKET_ID = 'images'; // Define bucket ID as constant
+
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const categoriesList = document.getElementById('categoriesList');
+        const createCategoryBtn = document.getElementById('createCategoryBtn');
+        const currentCategory = document.getElementById('currentCategory');
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const batchActions = document.getElementById('batchActions');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const messageContainer = document.getElementById('messageContainer');
+        const galleryContainer = document.getElementById('galleryContainer');
+        const categoryModal = document.getElementById('categoryModal');
+        const categoryModalTitle = document.getElementById('categoryModalTitle');
+        const categoryName = document.getElementById('categoryName');
+        const categoryModalClose = document.getElementById('categoryModalClose');
+        const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+        const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalInfo = document.getElementById('modalInfo');
+        const modalClose = document.getElementById('modalClose');
+        const photosTypeBtn = document.getElementById('photosTypeBtn');
+        const filesTypeBtn = document.getElementById('filesTypeBtn');
+        const uploadText = document.getElementById('uploadText');
+        const uploadSubtext = document.getElementById('uploadSubtext');
+
+        // State
+        let selectedFiles = [];
+        let categories = [];
+        let currentCategoryId = null;
+        let currentCategoryData = null;
+        let selectedImages = new Set();
+        let editingCategoryId = null;
+        let currentCategoryType = 'photos';
+
+        // Initialize the application
+        async function init() {
+            try {
+                await loadCategories();
+                setupEventListeners();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showMessage(`Error initializing application: ${error.message}`, 'error');
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            menuToggle.addEventListener('click', () => sidebar.classList.add('open'));
+            closeSidebar.addEventListener('click', () => sidebar.classList.remove('open'));
+            createCategoryBtn.addEventListener('click', () => openCategoryModal());
+            photosTypeBtn.addEventListener('click', () => setCategoryType('photos'));
+            filesTypeBtn.addEventListener('click', () => setCategoryType('files'));
+            categoryModalClose.addEventListener('click', closeCategoryModal);
+            cancelCategoryBtn.addEventListener('click', closeCategoryModal);
+            saveCategoryBtn.addEventListener('click', saveCategory);
+            fileInput.addEventListener('change', handleFileSelect);
+            uploadBtn.addEventListener('click', uploadFiles);
+            selectAllBtn.addEventListener('click', toggleSelectAll);
+            deleteSelectedBtn.addEventListener('click', deleteSelectedImages);
+            modalClose.addEventListener('click', closeImageModal);
+            imageModal.addEventListener('click', (e) => {
+                if (e.target === imageModal) closeImageModal();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-btn')) {
+                    const fileId = e.target.closest('.gallery-card').dataset.fileId;
+                    deleteFile(fileId);
+                }
+                if (e.target.classList.contains('image-checkbox')) {
+                    toggleImageSelection(e.target.dataset.fileId);
+                }
+                if (e.target.closest('.delete-date-btn')) {
+                    const date = e.target.closest('.delete-date-btn').dataset.date;
+                    deleteAllByDate(date);
+                }
+                if (e.target.closest('.gallery-image')) {
+                    const img = e.target.closest('.gallery-image').querySelector('img');
+                    if (img) {
+                        const fileId = e.target.closest('.gallery-card').dataset.fileId;
+                        openModalForFile(fileId);
+                    }
+                }
+            });
+        }
+
+        // Set category type
+        function setCategoryType(type) {
+            currentCategoryType = type;
+            photosTypeBtn.classList.remove('photos-active');
+            filesTypeBtn.classList.remove('files-active');
+            if (type === 'photos') {
+                photosTypeBtn.classList.add('photos-active');
+            } else {
+                filesTypeBtn.classList.add('files-active');
+            }
+        }
+
+        // Load categories
+        async function loadCategories() {
+            try {
+                const response = await databases.listDocuments(DATABASE_ID, CATEGORIES_COLLECTION_ID);
+                categories = response.documents;
+                renderCategories();
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                showMessage(`Error loading categories: ${error.message}`, 'error');
+            }
+        }
+
+        // Render categories
+        function renderCategories() {
+            categoriesList.innerHTML = categories.length === 0
+                ? `<div class="empty-state" style="padding: 20px 0;">
+                       <i class="fas fa-folder-plus"></i>
+                       <p>No categories yet</p>
+                       <small>Create your first category to get started</small>
+                   </div>`
+                : categories.map(category => {
+                    let categoryType = 'other';
+                    let displayName = category.name;
+                    if (category.name.toLowerCase().endsWith('_photos')) {
+                        categoryType = 'photos';
+                        displayName = category.name.replace(/_photos$/i, '');
+                    } else if (category.name.toLowerCase().endsWith('_files')) {
+                        categoryType = 'files';
+                        displayName = category.name.replace(/_files$/i, '');
+                    }
+                    return `
+                        <li class="category-item ${categoryType}-category ${category.$id === currentCategoryId ? 'active' : ''}">
+                            <span class="category-name">
+                                ${displayName}
+                                <span class="category-badge ${categoryType}-badge">
+                                    ${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)}
+                                </span>
+                            </span>
+                            <div class="category-actions">
+                                <button class="category-action-btn edit-category" data-category-id="${category.$id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="category-action-btn delete-category" data-category-id="${category.$id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </li>`;
+                }).join('');
+
+            document.querySelectorAll('.edit-category').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editCategory(btn.dataset.categoryId);
+                });
+            });
+
+            document.querySelectorAll('.delete-category').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCategory(btn.dataset.categoryId);
+                });
+            });
+
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.category-actions')) {
+                        const categoryId = e.target.closest('.category-item').querySelector('.edit-category').dataset.categoryId;
+                        selectCategory(categories.find(c => c.$id === categoryId));
+                    }
+                });
+            });
+        }
+
+        // Select category
+        async function selectCategory(category) {
+            currentCategoryId = category.$id;
+            currentCategoryData = category;
+            let categoryType = 'other';
+            let displayName = category.name;
+            if (category.name.toLowerCase().endsWith('_photos')) {
+                categoryType = 'photos';
+                displayName = category.name.replace(/_photos$/i, '');
+                uploadText.textContent = 'Click to select or drag & drop images';
+                uploadSubtext.textContent = 'Supports multiple images (JPEG, PNG, GIF)';
+                fileInput.accept = 'image/*';
+            } else if (category.name.toLowerCase().endsWith('_files')) {
+                categoryType = 'files';
+                displayName = category.name.replace(/_files$/i, '');
+                uploadText.textContent = 'Click to select or drag & drop files';
+                uploadSubtext.textContent = 'Supports any file type';
+                fileInput.accept = '*/*';
+            }
+            currentCategory.innerHTML = `
+                ${displayName}
+                <span class="category-badge ${categoryType}-badge">
+                    ${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)}
+                </span>`;
+            uploadSection.style.display = 'block';
+            batchActions.style.display = 'flex';
+            document.querySelectorAll('.category-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`.category-item .edit-category[data-category-id="${category.$id}"]`)
+                ?.closest('.category-item').classList.add('active');
+            if (window.innerWidth <= 768) sidebar.classList.remove('open');
+            await loadCategoryFiles();
+        }
+
+        // Load category files
+        async function loadCategoryFiles() {
+            try {
+                galleryContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading files...</div>
+                    </div>`;
+                const response = await databases.listDocuments(DATABASE_ID, IMAGES_COLLECTION_ID, [Query.equal('categoryId', currentCategoryId)]);
+                if (response.documents.length === 0) {
+                    galleryContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-image"></i>
+                            <p>No files in this category</p>
+                            <small>Upload files using the form above</small>
+                        </div>`;
+                    return;
+                }
+                const groups = {};
+                response.documents.forEach(file => {
+                    const date = formatDate(file.$createdAt);
+                    if (!groups[date]) groups[date] = [];
+                    groups[date].push(file);
+                });
+                galleryContainer.innerHTML = Object.entries(groups).map(([date, files]) => `
+                    <div class="date-group fade-in">
+                        <div class="date-header">
+                            <span>${date} (${files.length} files)</span>
+                            <button class="delete-date-btn" data-date="${date}">
+                                <i class="fas fa-trash"></i> Delete All from ${date}
+                            </button>
+                        </div>
+                        <div class="gallery-grid">
+                            ${files.map(file => {
+                                const isImage = file.type?.startsWith('image/');
+                                if (isImage) {
+                                    return `
+                                        <div class="gallery-card" data-file-id="${file.$id}">
+                                            <input type="checkbox" class="image-checkbox" data-file-id="${file.$id}">
+                                            <div class="gallery-image">
+                                                <img src="${file.url}" alt="${file.name}"
+                                                     onerror="this.src='https://via.placeholder.com/150?text=Image+Not+Found'; this.alt='Failed to load image';">
+                                            </div>
+                                            <button class="delete-btn">
+                                                <i class="fas fa-trash" style="font-size: 12px;"></i>
+                                            </button>
+                                        </div>`;
+                                } else {
+                                    const fileIcon = getFileIcon(file.type);
+                                    return `
+                                        <div class="gallery-card file-card" data-file-id="${file.$id}">
+                                            <input type="checkbox" class="image-checkbox" data-file-id="${file.$id}">
+                                            <div class="file-icon"><i class="${fileIcon}"></i></div>
+                                            <div class="file-card-name">${file.name}</div>
+                                            <a href="${file.url}" download="${file.name}" class="download-btn" style="position: absolute; bottom: 10px; right: 10px; color: var(--files-color);">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button class="delete-btn">
+                                                <i class="fas fa-trash" style="font-size: 12px;"></i>
+                                            </button>
+                                        </div>`;
+                                }
+                            }).join('')}
+                        </div>
+                    </div>`).join('');
+                selectedImages.clear();
+                updateDeleteSelectedButton();
+            } catch (error) {
+                console.error('Error loading files:', error);
+                showMessage(`Error loading files: ${error.message}`, 'error');
+            }
+        }
+
+        // Get file icon
+        function getFileIcon(fileType) {
+            if (!fileType) return 'fas fa-file';
+            if (fileType.includes('pdf')) return 'fas fa-file-pdf';
+            if (fileType.includes('word') || fileType.includes('document')) return 'fas fa-file-word';
+            if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'fas fa-file-excel';
+            if (fileType.includes('zip') || fileType.includes('compressed')) return 'fas fa-file-archive';
+            if (fileType.includes('text')) return 'fas fa-file-alt';
+            if (fileType.includes('video')) return 'fas fa-file-video';
+            if (fileType.includes('audio')) return 'fas fa-file-audio';
+            return 'fas fa-file';
+        }
+
+        // Open category modal
+        function openCategoryModal(categoryId = null) {
+            editingCategoryId = categoryId;
+            if (categoryId) {
+                const category = categories.find(c => c.$id === categoryId);
+                if (category) {
+                    categoryModalTitle.textContent = 'Edit Category';
+                    categoryName.value = category.name.replace(/_(photos|files)$/i, '');
+                    setCategoryType(category.name.toLowerCase().endsWith('_photos') ? 'photos' : 'files');
+                }
+            } else {
+                categoryModalTitle.textContent = 'Create Category';
+                categoryName.value = '';
+                setCategoryType('photos');
+            }
+            categoryModal.classList.add('open');
+        }
+
+        // Close category modal
+        function closeCategoryModal() {
+            categoryModal.classList.remove('open');
+            editingCategoryId = null;
+        }
+
+        // Save category
+        async function saveCategory() {
+            let name = categoryName.value.trim();
+            if (!name) {
+                showMessage('Please enter a category name', 'error');
+                return;
+            }
+            if (currentCategoryType === 'photos' && !name.toLowerCase().endsWith('_photos')) {
+                name += '_photos';
+            } else if (currentCategoryType === 'files' && !name.toLowerCase().endsWith('_files')) {
+                name += '_files';
+            }
+            try {
+                if (editingCategoryId) {
+                    await databases.updateDocument(DATABASE_ID, CATEGORIES_COLLECTION_ID, editingCategoryId, { name });
+                    showMessage('Category updated successfully', 'success');
+                } else {
+                    await databases.createDocument(DATABASE_ID, CATEGORIES_COLLECTION_ID, ID.unique(), { name });
+                    showMessage('Category created successfully', 'success');
+                }
+                await loadCategories();
+                closeCategoryModal();
+            } catch (error) {
+                console.error('Error saving category:', error);
+                showMessage(`Error saving category: ${error.message}`, 'error');
+            }
+        }
+
+        // Edit category
+        function editCategory(categoryId) {
+            openCategoryModal(categoryId);
+        }
+
+        // Delete category
+        async function deleteCategory(categoryId) {
+            if (!confirm('Are you sure you want to delete this category and all its files?')) return;
+            try {
+                const files = await databases.listDocuments(DATABASE_ID, IMAGES_COLLECTION_ID, [Query.equal('categoryId', categoryId)]);
+                await Promise.all(files.documents.map(async file => {
+                    try {
+                        await storage.deleteFile(STORAGE_BUCKET_ID, file.fileId);
+                        await databases.deleteDocument(DATABASE_ID, IMAGES_COLLECTION_ID, file.$id);
+                    } catch (error) {
+                        console.error(`Error deleting file ${file.fileId}:`, error);
+                        throw new Error(`Failed to delete file ${file.name} from storage`);
+                    }
+                }));
+                await databases.deleteDocument(DATABASE_ID, CATEGORIES_COLLECTION_ID, categoryId);
+                showMessage('Category and all its files deleted successfully', 'success');
+                if (currentCategoryId === categoryId) {
+                    currentCategoryId = null;
+                    currentCategoryData = null;
+                    currentCategory.textContent = 'Select a Category';
+                    uploadSection.style.display = 'none';
+                    batchActions.style.display = 'none';
+                    galleryContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-folder-open"></i>
+                            <p>No category selected</p>
+                            <small>Select a category from the sidebar to view or upload files</small>
+                        </div>`;
+                }
+                await loadCategories();
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                showMessage(`Error deleting category: ${error.message}`, 'error');
+            }
+        }
+
+        // Handle file selection
+        function handleFileSelect(e) {
+            selectedFiles = Array.from(e.target.files);
+            if (selectedFiles.length === 0) {
+                fileList.style.display = 'none';
+                uploadBtn.disabled = true;
+                return;
+            }
+            const isPhotosCategory = currentCategoryData.name.toLowerCase().endsWith('_photos');
+            if (isPhotosCategory) {
+                const invalidFiles = selectedFiles.filter(file => !file.type.startsWith('image/'));
+                if (invalidFiles.length > 0) {
+                    showMessage('Please select only image files for photo categories', 'error');
+                    fileInput.value = '';
+                    selectedFiles = [];
+                    fileList.style.display = 'none';
+                    uploadBtn.disabled = true;
+                    return;
+                }
+            }
+            fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                    <div class="file-type">${file.type || 'Unknown'}</div>
+                    <button class="delete-btn" data-index="${index}" style="position: static; opacity: 1;">
+                        <i class="fas fa-times" style="font-size: 12px;"></i>
+                    </button>
+                </div>`).join('');
+            document.querySelectorAll('.file-item .delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => removeFile(parseInt(btn.dataset.index)));
+            });
+            fileList.style.display = 'flex';
+            uploadBtn.disabled = false;
+        }
+
+        // Remove file from selection
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            if (selectedFiles.length === 0) {
+                fileList.style.display = 'none';
+                uploadBtn.disabled = true;
+                return;
+            }
+            fileList.innerHTML = selectedFiles.map((file, newIndex) => `
+                <div class="file-item">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                    <div class="file-type">${file.type || 'Unknown'}</div>
+                    <button class="delete-btn" data-index="${newIndex}" style="position: static; opacity: 1;">
+                        <i class="fas fa-times" style="font-size: 12px;"></i>
+                    </button>
+                </div>`).join('');
+            document.querySelectorAll('.file-item .delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => removeFile(parseInt(btn.dataset.index)));
+            });
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Upload files
+        async function uploadFiles() {
+            if (selectedFiles.length === 0 || !currentCategoryId) return;
+            try {
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                uploadProgress.style.display = 'block';
+                let uploadedCount = 0;
+                const totalFiles = selectedFiles.length;
+                for (const file of selectedFiles) {
+                    const storageResponse = await storage.createFile(STORAGE_BUCKET_ID, ID.unique(), file);
+                    const fileUrl = storage.getFileView(STORAGE_BUCKET_ID, storageResponse.$id);
+                    await databases.createDocument(DATABASE_ID, IMAGES_COLLECTION_ID, ID.unique(), {
+                        name: file.name,
+                        categoryId: currentCategoryId,
+                        fileId: storageResponse.$id,
+                        url: fileUrl,
+                        size: file.size,
+                        type: file.type
+                    });
+                    uploadedCount++;
+                    const progress = Math.round((uploadedCount / totalFiles) * 100);
+                    progressFill.style.width = `${progress}%`;
+                    progressText.textContent = `${progress}% (${uploadedCount}/${totalFiles})`;
+                }
+                showMessage(`Successfully uploaded ${uploadedCount} files!`, 'success');
+                fileInput.value = '';
+                selectedFiles = [];
+                fileList.style.display = 'none';
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload All Files';
+                uploadProgress.style.display = 'none';
+                progressFill.style.width = '0%';
+                progressText.textContent = '0%';
+                await loadCategoryFiles();
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage(`Error uploading files: ${error.message}`, 'error');
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload All Files';
+                uploadProgress.style.display = 'none';
+            }
+        }
+
+        // Toggle file selection
+        function toggleImageSelection(fileId) {
+            if (selectedImages.has(fileId)) {
+                selectedImages.delete(fileId);
+            } else {
+                selectedImages.add(fileId);
+            }
+            updateDeleteSelectedButton();
+        }
+
+        // Update delete selected button
+        function updateDeleteSelectedButton() {
+            deleteSelectedBtn.style.display = selectedImages.size > 0 ? 'flex' : 'none';
+            deleteSelectedBtn.innerHTML = `<i class="fas fa-trash"></i> Delete Selected (${selectedImages.size})`;
+        }
+
+        // Toggle select all
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.image-checkbox');
+            if (selectedImages.size === checkboxes.length) {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    selectedImages.delete(checkbox.dataset.fileId);
+                });
+            } else {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    selectedImages.add(checkbox.dataset.fileId);
+                });
+            }
+            updateDeleteSelectedButton();
+        }
+
+        // Delete selected files
+        async function deleteSelectedImages() {
+            if (selectedImages.size === 0) return;
+            if (!confirm(`Are you sure you want to delete ${selectedImages.size} selected files?`)) return;
+            try {
+                deleteSelectedBtn.disabled = true;
+                deleteSelectedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                await Promise.all(Array.from(selectedImages).map(async fileId => {
+                    const file = await databases.getDocument(DATABASE_ID, IMAGES_COLLECTION_ID, fileId);
+                    try {
+                        await storage.deleteFile(STORAGE_BUCKET_ID, file.fileId);
+                    } catch (error) {
+                        console.error(`Error deleting file ${file.fileId} from storage:`, error);
+                        throw new Error(`Failed to delete file ${file.name} from storage`);
+                    }
+                    await databases.deleteDocument(DATABASE_ID, IMAGES_COLLECTION_ID, fileId);
+                }));
+                showMessage(`Successfully deleted ${selectedImages.size} files!`, 'success');
+                selectedImages.clear();
+                await loadCategoryFiles();
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage(`Error deleting files: ${error.message}`, 'error');
+            } finally {
+                deleteSelectedBtn.disabled = false;
+                updateDeleteSelectedButton();
+            }
+        }
+
+        // Delete single file
+        async function deleteFile(fileId) {
+            if (!confirm('Are you sure you want to delete this file?')) return;
+            try {
+                const file = await databases.getDocument(DATABASE_ID, IMAGES_COLLECTION_ID, fileId);
+                try {
+                    await storage.deleteFile(STORAGE_BUCKET_ID, file.fileId);
+                } catch (error) {
+                    console.error(`Error deleting file ${file.fileId} from storage:`, error);
+                    showMessage(`Failed to delete file ${file.name} from storage`, 'error');
+                    return;
+                }
+                await databases.deleteDocument(DATABASE_ID, IMAGES_COLLECTION_ID, fileId);
+                showMessage('File deleted successfully!', 'success');
+                await loadCategoryFiles();
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage(`Error deleting file: ${error.message}`, 'error');
+            }
+        }
+
+        // Delete all files by date
+        async function deleteAllByDate(date) {
+            if (!confirm(`Are you sure you want to delete all files from ${date}?`)) return;
+            try {
+                const response = await databases.listDocuments(DATABASE_ID, IMAGES_COLLECTION_ID, [Query.equal('categoryId', currentCategoryId)]);
+                const filesToDelete = response.documents.filter(file => formatDate(file.$createdAt) === date);
+                await Promise.all(filesToDelete.map(async file => {
+                    try {
+                        await storage.deleteFile(STORAGE_BUCKET_ID, file.fileId);
+                    } catch (error) {
+                        console.error(`Error deleting file ${file.fileId} from storage:`, error);
+                        throw new Error(`Failed to delete file ${file.name} from storage`);
+                    }
+                    await databases.deleteDocument(DATABASE_ID, IMAGES_COLLECTION_ID, file.$id);
+                }));
+                showMessage(`All files from ${date} deleted successfully!`, 'success');
+                await loadCategoryFiles();
+            } catch (error) {
+                console.error('Delete all error:', error);
+                showMessage(`Error deleting files: ${error.message}`, 'error');
+            }
+        }
+
+        // Open modal for file
+        async function openModalForFile(fileId) {
+            try {
+                const file = await databases.getDocument(DATABASE_ID, IMAGES_COLLECTION_ID, fileId);
+                if (file.type?.startsWith('image/')) {
+                    modalImage.src = file.url;
+                    modalInfo.innerHTML = `
+                        <div><strong>Name:</strong> ${file.name}</div>
+                        <div><strong>Uploaded:</strong> ${formatDate(file.$createdAt)}</div>
+                        <div><strong>Size:</strong> ${formatFileSize(file.size || 0)}</div>`;
+                    modalImage.onerror = () => {
+                        modalImage.src = 'https://via.placeholder.com/800?text=Image+Not+Found';
+                        modalImage.alt = 'Failed to load image';
+                        modalInfo.textContent = '';
+                        showMessage('Error loading image in modal', 'error');
+                    };
+                    imageModal.classList.add('open');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    window.open(file.url, '_blank');
+                }
+            } catch (error) {
+                console.error('Error opening file:', error);
+                showMessage(`Error opening file: ${error.message}`, 'error');
+            }
+        }
+
+        // Close image modal
+        function closeImageModal() {
+            imageModal.classList.remove('open');
+            document.body.style.overflow = '';
+            modalInfo.textContent = '';
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'Date not available';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch {
+                return dateString;
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const messageEl = document.createElement('div');
+            messageEl.className = `${type}-message`;
+            messageEl.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>`;
+            messageContainer.innerHTML = '';
+            messageContainer.appendChild(messageEl);
+            setTimeout(() => {
+                messageEl.style.opacity = '0';
+                messageEl.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => messageEl.remove(), 500);
+            }, 5000);
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
