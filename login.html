@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Login • Appwrite</title>
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #f02e65;
+      --primary-dark: #d91c54;
+      --secondary: #2e5bf0;
+      --text-primary: #1a1a1a;
+      --text-secondary: #65676b;
+      --bg: #f7f7f8;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      margin-bottom: 16px;
+      color: var(--primary);
+      font-size: 32px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: 16px;
+      transition: all 0.2s ease;
+      background: #fafafa;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(240, 46, 101, 0.1);
+      background: #fff;
+    }
+
+    input.error {
+      border-color: var(--error);
+    }
+
+    .input-icon {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    .password-toggle {
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .error-message {
+      font-size: 13px;
+      color: var(--error);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-loading .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider::before {
+      margin-right: 16px;
+    }
+
+    .divider::after {
+      margin-left: 16px;
+    }
+
+    .social-login {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .btn-social {
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 10px;
+      font-size: 18px;
+    }
+
+    .btn-social:hover {
+      background: #f1f3f5;
+      transform: translateY(-1px);
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+    }
+
+    .footer-links a {
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .message-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .message-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .remember-forgot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .remember-me input {
+      width: auto;
+    }
+
+    .forgot-password {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .forgot-password:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 16px;
+      }
+      
+      .card {
+        padding: 24px;
+      }
+      
+      .social-login {
+        grid-template-columns: 1fr;
+      }
+      
+      .remember-forgot {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <div class="logo">
+          <i class="fas fa-database"></i>
+        </div>
+        <h1>Welcome back</h1>
+        <p class="subtitle">Sign in to your Appwrite account</p>
+      </div>
+
+      <div id="messageContainer"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <div class="input-wrapper">
+            <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="email" required />
+            <span class="input-icon"><i class="fas fa-envelope"></i></span>
+          </div>
+          <div id="emailError" class="error-message hidden"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password" required />
+            <span class="input-icon password-toggle" id="passwordToggle">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+          <div id="passwordError" class="error-message hidden"></div>
+        </div>
+
+        <div class="remember-forgot">
+          <label class="remember-me">
+            <input type="checkbox" id="rememberMe">
+            <span>Remember me</span>
+          </label>
+          <a href="forgot-password.html" class="forgot-password">Forgot password?</a>
+        </div>
+
+        <button type="submit" id="btnLogin" class="btn-primary">
+          <span>Sign in</span>
+        </button>
+      </form>
+
+      <div class="divider">or continue with</div>
+
+      <div class="social-login">
+        <button type="button" class="btn-social">
+          <i class="fab fa-google"></i>
+        </button>
+      </div>
+
+      <div class="footer-links">
+        Don't have an account? <a href="register.html">Sign up</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { Client, Account } = Appwrite;
+    const client = new Client()
+      .setEndpoint('https://fra.cloud.appwrite.io/v1')
+      .setProject('68847c040002eee8efb0');
+    const account = new Account(client);
+
+    // DOM Elements
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('loginEmail');
+    const passwordInput = document.getElementById('loginPassword');
+    const passwordToggle = document.getElementById('passwordToggle');
+    const rememberMe = document.getElementById('rememberMe');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    const btnLogin = document.getElementById('btnLogin');
+    const messageContainer = document.getElementById('messageContainer');
+
+    // Check if user is already logged in
+    checkCurrentSession();
+
+    async function checkCurrentSession() {
+      try {
+        const user = await account.get();
+        // If user is already logged in, redirect to dashboard
+        showMessage('You are already logged in. Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = 'dash.html';
+        }, 2000);
+      } catch (error) {
+        // User is not logged in, proceed with login form
+        console.log('User not logged in');
+      }
+    }
+
+    // Password visibility toggle
+    passwordToggle.addEventListener('click', () => {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      passwordToggle.querySelector('i').classList.toggle('fa-eye');
+      passwordToggle.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+
+    // Form validation and submission
+    loginForm.addEventListener('submit', handleLogin);
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      
+      // Reset errors
+      emailError.classList.add('hidden');
+      passwordError.classList.add('hidden');
+      
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      
+      let isValid = true;
+      
+      // Validate email
+      if (!email) {
+        showError(emailError, 'Email is required');
+        isValid = false;
+      } else if (!isValidEmail(email)) {
+        showError(emailError, 'Please enter a valid email address');
+        isValid = false;
+      }
+      
+      // Validate password
+      if (!password) {
+        showError(passwordError, 'Password is required');
+        isValid = false;
+      }
+      
+      if (!isValid) return;
+      
+      // Show loading state
+      setLoadingState(true);
+      
+      try {
+        // Create email session (login) - Fixed method name
+        await account.createEmailSession(email, password);
+        
+        // If "Remember me" is checked, session will persist longer
+        // Appwrite handles session duration automatically
+        
+        showMessage('Login successful! Redirecting...', 'success');
+        
+        // Redirect to dashboard after successful login
+        setTimeout(() => {
+          window.location.href = 'dash.html';
+        }, 1500);
+      } catch (error) {
+        // Handle specific error cases
+        if (error.code === 401) {
+          showError(passwordError, 'Invalid email or password');
+          showMessage('Invalid email or password. Please try again.', 'error');
+        } else if (error.code === 400) {
+          showError(emailError, 'Invalid email format');
+          showMessage('Please check your email address and try again.', 'error');
+        } else {
+          showMessage('Login error: ' + (error.message || error), 'error');
+        }
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function showError(element, message) {
+      element.textContent = message;
+      element.classList.remove('hidden');
+    }
+
+    function setLoadingState(isLoading) {
+      if (isLoading) {
+        btnLogin.disabled = true;
+        btnLogin.classList.add('btn-loading');
+        btnLogin.innerHTML = '<div class="spinner"></div><span>Signing in...</span>';
+      } else {
+        btnLogin.disabled = false;
+        btnLogin.classList.remove('btn-loading');
+        btnLogin.innerHTML = '<span>Sign in</span>';
+      }
+    }
+
+    function showMessage(message, type) {
+      const messageEl = document.createElement('div');
+      messageEl.className = `message message-${type}`;
+      messageEl.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        <span>${message}</span>
+      `;
+      
+      messageContainer.innerHTML = '';
+      messageContainer.appendChild(messageEl);
+      
+      // Auto dismiss after 5 seconds for error messages
+      if (type === 'error') {
+        setTimeout(() => {
+          messageEl.style.opacity = '0';
+          messageEl.style.transition = 'opacity 0.5s ease';
+          setTimeout(() => messageEl.remove(), 500);
+        }, 5000);
+      }
+    }
+  </script>
+</body>
+</html>

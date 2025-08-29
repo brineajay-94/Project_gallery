@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery | Browse Categories</title>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f02e65;
+            --primary-dark: #d91c54;
+            --secondary: #2e5bf0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #65676b;
+            --bg: #f7f7f8;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --photos-color: #3b82f6;
+            --files-color: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Header */
+        .header {
+            background: var(--card);
+            padding: 16px 24px;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .login-btn {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .login-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            justify-content: flex-end;
+        }
+
+        .view-btn {
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Categories List */
+        .categories-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .category-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .category-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .category-image {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: var(--radius-sm);
+        }
+
+        .category-info {
+            flex: 1;
+            padding-left: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-name-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .category-tag {
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .category-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+            background: var(--bg);
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        /* Items Container */
+        .items-container {
+            display: none;
+            margin-top: -55px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 12px 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            width: 200px;
+            justify-content: center;
+        }
+
+        .back-button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .items-list {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .item-card {
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .items-grid .item-card {
+            height: auto;
+        }
+
+        .items-list .item-card {
+            display: flex;
+            height: auto;
+            align-items: center;
+            padding: 12px;
+        }
+
+        .items-grid .item-image {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .items-list .item-image {
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: var(--radius-sm);
+        }
+
+        .items-list .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .item-info {
+            padding: 16px;
+        }
+
+        .items-list .item-info {
+            flex: 1;
+            padding-left: 16px;
+        }
+
+        .item-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .items-list .item-name {
+            white-space: normal;
+        }
+
+        .item-date {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--files-color);
+            color: white;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            margin-top: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .download-btn:hover {
+            background: #0a8f63;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+            text-align: center;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: var(--radius);
+        }
+
+        .modal-info {
+            color: white;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: 400;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(240, 46, 101, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #d1d5db;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .category-card {
+                padding: 12px;
+            }
+
+            .category-image {
+                width: 48px;
+                height: 48px;
+            }
+
+            .items-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .items-grid .item-image {
+                height: 100px;
+            }
+
+            .items-list .item-image {
+                width: 60px;
+                height: 60px;
+            }
+
+            .back-button {
+                padding: 10px 18px;
+                font-size: 14px;
+                width: 180px;
+            }
+
+            .category-name {
+                font-size: 14px;
+            }
+
+            .category-tag {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+        }
+
+        /* Animation enhancements */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="#" class="logo">Gallery</a>
+        <div class="user-info" id="userInfo">
+            <!-- User info will be populated here -->
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <h1 class="page-title" id="pageTitle">Browse Categories</h1>
+        
+        <!-- View Toggle -->
+        <div class="view-toggle" id="viewToggle" style="display: none;">
+            <button class="view-btn" data-view="grid">
+                <i class="fas fa-th"></i> Grid
+            </button>
+            <button class="view-btn active" data-view="list">
+                <i class="fas fa-list"></i> List
+            </button>
+        </div>
+
+        <!-- Categories List -->
+        <div class="categories-list" id="categoriesList">
+            <!-- Categories will be loaded here -->
+        </div>
+
+        <!-- Items Container -->
+        <div class="items-container" id="itemsContainer">
+            <button class="back-button" id="backButton">
+                <i class="fas fa-arrow-left"></i> Back to Categories
+            </button>
+            
+            <h2 id="categoryTitle" style="margin-bottom: 20px;"></h2>
+            
+            <div class="items-grid" id="itemsGrid">
+                <!-- Items in grid view will be loaded here -->
+            </div>
+            
+            <div class="items-list" id="itemsList">
+                <!-- Items in list view will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Image Modal -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modalImage" src="" alt="Enlarged view">
+            <div id="modalInfo" class="modal-info"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Appwrite
+        const { Client, Storage, ID, Databases, Query, Account } = Appwrite;
+        const client = new Client()
+            .setEndpoint('https://fra.cloud.appwrite.io/v1')
+            .setProject('68847c040002eee8efb0');
+        
+        const storage = new Storage(client);
+        const databases = new Databases(client);
+        const account = new Account(client);
+        
+        // Appwrite constants
+        const DATABASE_ID = '68847e4f000384e52608';
+        const CATEGORIES_COLLECTION_ID = 'categories';
+        const IMAGES_COLLECTION_ID = 'images';
+        
+        // DOM Elements
+        const userInfo = document.getElementById('userInfo');
+        const categoriesList = document.getElementById('categoriesList');
+        const itemsContainer = document.getElementById('itemsContainer');
+        const itemsGrid = document.getElementById('itemsGrid');
+        const itemsList = document.getElementById('itemsList');
+        const backButton = document.getElementById('backButton');
+        const pageTitle = document.getElementById('pageTitle');
+        const categoryTitle = document.getElementById('categoryTitle');
+        const viewToggle = document.getElementById('viewToggle');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalInfo = document.getElementById('modalInfo');
+        const modalClose = document.getElementById('modalClose');
+
+        // State
+        let categories = [];
+        let currentCategoryId = null;
+        let currentCategoryData = null;
+        let currentView = 'list';
+        let currentUser = null;
+
+        // Initialize the application
+        async function init() {
+            try {
+                await checkAuth();
+                await loadCategories();
+                setupEventListeners();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                categoriesList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Error initializing application</p>
+                        <small>Please check your Appwrite configuration and try again</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Check authentication status
+        async function checkAuth() {
+            try {
+                currentUser = await account.get();
+                renderUserInfo();
+            } catch (error) {
+                console.log('User not logged in:', error.message);
+                renderLoginButton();
+            }
+        }
+
+        // Render user info
+        function renderUserInfo() {
+            if (!currentUser) return;
+            
+            const firstLetter = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+            userInfo.innerHTML = `
+                <span>Hello, ${currentUser.name || 'User'}</span>
+                <div class="profile-icon">${firstLetter}</div>
+            `;
+        }
+
+        // Render login button
+        function renderLoginButton() {
+            userInfo.innerHTML = `
+                <button class="login-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            `;
+            
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                alert('Login functionality would be implemented here');
+            });
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            backButton.addEventListener('click', () => {
+                showCategoriesView();
+            });
+            
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const view = e.currentTarget.dataset.view;
+                    setView(view);
+                });
+            });
+            
+            modalClose.addEventListener('click', closeImageModal);
+            imageModal.addEventListener('click', (e) => {
+                if (e.target === imageModal) closeImageModal();
+            });
+        }
+
+        // Set view mode (grid or list)
+        function setView(view) {
+            currentView = view;
+            
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.view-btn[data-view="${view}"]`).classList.add('active');
+            
+            if (view === 'grid') {
+                itemsGrid.style.display = 'grid';
+                itemsList.style.display = 'none';
+            } else {
+                itemsGrid.style.display = 'none';
+                itemsList.style.display = 'flex';
+            }
+            
+            if (currentCategoryData && currentCategoryData.name.toLowerCase().endsWith('_photos')) {
+                localStorage.setItem('galleryView', view);
+            }
+        }
+
+        // Load categories from database
+        async function loadCategories() {
+            try {
+                categoriesList.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading categories...</div>
+                    </div>
+                `;
+                
+                const response = await databases.listDocuments(
+                    DATABASE_ID, 
+                    CATEGORIES_COLLECTION_ID,
+                    [Query.limit(100)] // Ensure sufficient limit
+                );
+                
+                categories = response.documents;
+                if (categories.length === 0) {
+                    categoriesList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-folder-open"></i>
+                            <p>No categories available</p>
+                            <small>Check back later for new content</small>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                renderCategories();
+            } catch (error) {
+                console.error('Error loading categories:', error.message);
+                categoriesList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Error loading categories: ${error.message}</p>
+                        <small>Please check your Appwrite configuration and try again</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Render categories
+        function renderCategories() {
+            categoriesList.innerHTML = '';
+            
+            categories.forEach(category => {
+                let categoryType = 'other';
+                let displayName = category.name;
+                
+                if (category.name.toLowerCase().endsWith('_photos')) {
+                    categoryType = 'photos';
+                    displayName = category.name.replace(/_photos$/i, '');
+                } else if (category.name.toLowerCase().endsWith('_files')) {
+                    categoryType = 'files';
+                    displayName = category.name.replace(/_files$/i, '');
+                }
+                
+                const categoryCard = document.createElement('div');
+                categoryCard.className = 'category-card fade-in';
+                const tagColor = categoryType === 'photos' ? 'var(--photos-color)' : (categoryType === 'files' ? 'var(--files-color)' : 'gray');
+                const tagText = categoryType.toUpperCase();
+                categoryCard.innerHTML = `
+                    <div class="category-image">
+                        <i class="fas ${categoryType === 'photos' ? 'fa-image' : 'fa-file'} fa-2x"></i>
+                    </div>
+                    <div class="category-info">
+                        <div class="category-name-wrapper">
+                            <div class="category-name">${displayName}</div>
+                            <div class="category-tag" style="background: ${tagColor};">
+                                ${tagText}
+                            </div>
+                        </div>
+                        <div class="category-count">0 items</div>
+                    </div>
+                `;
+                
+                categoryCard.addEventListener('click', () => {
+                    selectCategory(category);
+                });
+                
+                categoriesList.appendChild(categoryCard);
+                
+                loadItemCount(category.$id, categoryCard.querySelector('.category-count'));
+            });
+        }
+
+        // Load item count for a category
+        async function loadItemCount(categoryId, countElement) {
+            try {
+                const response = await databases.listDocuments(
+                    DATABASE_ID,
+                    IMAGES_COLLECTION_ID,
+                    [Query.equal('categoryId', categoryId), Query.limit(100)]
+                );
+                
+                countElement.textContent = `${response.documents.length} items`;
+            } catch (error) {
+                console.error('Error loading item count:', error.message);
+                countElement.textContent = '? items';
+            }
+        }
+
+        // Select a category
+        async function selectCategory(category) {
+            currentCategoryId = category.$id;
+            currentCategoryData = category;
+            
+            let displayName = category.name;
+            let categoryType = 'other';
+            
+            if (category.name.toLowerCase().endsWith('_photos')) {
+                displayName = category.name.replace(/_photos$/i, '');
+                categoryType = 'photos';
+            } else if (category.name.toLowerCase().endsWith('_files')) {
+                displayName = category.name.replace(/_files$/i, '');
+                categoryType = 'files';
+            }
+            
+            categoryTitle.textContent = displayName;
+            pageTitle.textContent = displayName;
+            viewToggle.style.display = categoryType === 'photos' ? 'flex' : 'none';
+            
+            const defaultView = 'list';
+            setView(defaultView);
+            
+            categoriesList.style.display = 'none';
+            itemsContainer.style.display = 'block';
+            
+            await loadCategoryItems();
+        }
+
+        // Show categories view
+        function showCategoriesView() {
+            currentCategoryId = null;
+            currentCategoryData = null;
+            
+            pageTitle.textContent = 'Browse Categories';
+            viewToggle.style.display = 'none';
+            
+            categoriesList.style.display = 'flex';
+            itemsContainer.style.display = 'none';
+        }
+
+        // Load items for the current category
+        async function loadCategoryItems() {
+            try {
+                itemsGrid.innerHTML = `
+                    <div class="loading" style="grid-column: 1 / -1;">
+                        <div class="spinner"></div>
+                        <div>Loading items...</div>
+                    </div>
+                `;
+                itemsList.innerHTML = '';
+                
+                const response = await databases.listDocuments(
+                    DATABASE_ID,
+                    IMAGES_COLLECTION_ID,
+                    [Query.equal('categoryId', currentCategoryId), Query.limit(100)]
+                );
+                
+                if (response.documents.length === 0) {
+                    itemsGrid.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-image"></i>
+                            <p>No items in this category</p>
+                            <small>Check back later for new content</small>
+                        </div>
+                    `;
+                    itemsList.innerHTML = '';
+                    return;
+                }
+                
+                itemsGrid.innerHTML = '';
+                itemsList.innerHTML = '';
+                
+                response.documents.forEach(item => {
+                    if (item.url && item.name && item.categoryId) { // Validate required fields
+                        renderItem(item, itemsGrid, 'grid');
+                        renderItem(item, itemsList, 'list');
+                    } else {
+                        console.warn('Skipping item with missing required fields:', item);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading items:', error.message);
+                itemsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Error loading items: ${error.message}</p>
+                        <small>Please check your Appwrite collection configuration</small>
+                    </div>
+                `;
+                itemsList.innerHTML = '';
+            }
+        }
+
+        // Render an item
+        function renderItem(item, container, viewType) {
+            const isImage = item.type && item.type.startsWith('image/');
+            const isFileCategory = currentCategoryData && currentCategoryData.name.toLowerCase().endsWith('_files');
+            const itemCard = document.createElement('div');
+            itemCard.className = 'item-card fade-in';
+            
+            if (isImage && !isFileCategory) {
+                itemCard.innerHTML = `
+                    <div class="item-image">
+                        <img src="${item.url}" 
+                             alt="${item.name}"
+                             style="width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.src='https://via.placeholder.com/150?text=Image+Not+Found'; this.alt='Failed to load image';">
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-date">${formatDate(item.$createdAt)}</div>
+                    </div>
+                `;
+                
+                itemCard.querySelector('.item-image').addEventListener('click', () => {
+                    openModalForFile(item);
+                });
+            } else {
+                const fileIcon = getFileIcon(item.type || 'file');
+                itemCard.innerHTML = `
+                    <div class="item-image">
+                        <i class="${fileIcon} fa-2x"></i>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-date">${formatDate(item.$createdAt)}</div>
+                        <a href="${item.url}" download="${item.name}" class="download-btn">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>
+                `;
+            }
+            
+            container.appendChild(itemCard);
+        }
+
+        // Get appropriate icon for file type
+        function getFileIcon(fileType) {
+            if (!fileType) return 'fas fa-file';
+            
+            if (fileType.includes('pdf')) return 'fas fa-file-pdf';
+            if (fileType.includes('word') || fileType.includes('document')) return 'fas fa-file-word';
+            if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'fas fa-file-excel';
+            if (fileType.includes('zip') || fileType.includes('compressed')) return 'fas fa-file-archive';
+            if (fileType.includes('text')) return 'fas fa-file-alt';
+            if (fileType.includes('video')) return 'fas fa-file-video';
+            if (fileType.includes('audio')) return 'fas fa-file-audio';
+            
+            return 'fas fa-file';
+        }
+
+        // Open modal for a file
+        function openModalForFile(file) {
+            if (file.type && file.type.startsWith('image/')) {
+                modalImage.src = file.url;
+                modalInfo.innerHTML = `
+                    <div><strong>Name:</strong> ${file.name}</div>
+                    <div><strong>Uploaded:</strong> ${formatDate(file.$createdAt)}</div>
+                    <div><strong>Size:</strong> ${formatFileSize(file.size || 0)}</div>
+                `;
+                modalImage.onerror = () => {
+                    modalImage.src = 'https://via.placeholder.com/800?text=Image+Not+Found';
+                    modalImage.alt = 'Failed to load image';
+                };
+                imageModal.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Close image modal
+        function closeImageModal() {
+            imageModal.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'Date not available';
+            
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric'
+                });
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>

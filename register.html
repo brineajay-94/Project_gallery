@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Register • Appwrite</title>
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #f02e65;
+      --primary-dark: #d91c54;
+      --secondary: #2e5bf0;
+      --text-primary: #1a1a1a;
+      --text-secondary: #65676b;
+      --bg: #f7f7f8;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      margin-bottom: 16px;
+      color: var(--primary);
+      font-size: 32px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: 16px;
+      transition: all 0.2s ease;
+      background: #fafafa;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(240, 46, 101, 0.1);
+      background: #fff;
+    }
+
+    input.error {
+      border-color: var(--error);
+    }
+
+    .input-icon {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    .password-toggle {
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .password-strength {
+      height: 4px;
+      margin-top: 8px;
+      border-radius: 2px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .password-strength-bar {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .strength-weak {
+      background: var(--error);
+      width: 33%;
+    }
+
+    .strength-medium {
+      background: var(--warning);
+      width: 66%;
+    }
+
+    .strength-strong {
+      background: var(--success);
+      width: 100%;
+    }
+
+    .strength-text {
+      font-size: 12px;
+      margin-top: 4px;
+      color: var(--text-secondary);
+    }
+
+    .error-message {
+      font-size: 13px;
+      color: var(--error);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-loading .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider::before {
+      margin-right: 16px;
+    }
+
+    .divider::after {
+      margin-left: 16px;
+    }
+
+    .social-login {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .btn-social {
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 10px;
+      font-size: 18px;
+    }
+
+    .btn-social:hover {
+      background: #f1f3f5;
+      transform: translateY(-1px);
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+    }
+
+    .footer-links a {
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .message-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .message-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 16px;
+      }
+      
+      .card {
+        padding: 24px;
+      }
+      
+      .social-login {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <div class="logo">
+          <i class="fas fa-database"></i>
+        </div>
+        <h1>Create your account</h1>
+        <p class="subtitle">Get started with TheTruth</p>
+      </div>
+
+      <div id="messageContainer"></div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="regEmail">Email</label>
+          <div class="input-wrapper">
+            <input type="email" id="regEmail" placeholder="Enter your email" autocomplete="email" required />
+            <span class="input-icon"><i class="fas fa-envelope"></i></span>
+          </div>
+          <div id="emailError" class="error-message hidden"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="regPassword" placeholder="Create a strong password" autocomplete="new-password" required />
+            <span class="input-icon password-toggle" id="passwordToggle">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+          <div class="password-strength">
+            <div class="password-strength-bar" id="passwordStrengthBar"></div>
+          </div>
+          <div class="strength-text" id="passwordStrengthText">Password strength</div>
+          <div id="passwordError" class="error-message hidden"></div>
+        </div>
+
+        <button type="submit" id="btnRegister" class="btn-primary">
+          <span>Create account</span>
+        </button>
+      </form>
+
+      <div class="divider">or continue with</div>
+
+      <div class="social-login">
+        <button type="button" class="btn-social">
+          <i class="fab fa-google"></i>
+        </button>
+        
+      </div>
+
+      <div class="footer-links">
+        Already have an account? <a href="login.html">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { Client, Account, ID } = Appwrite;
+    const client = new Client()
+      .setEndpoint('https://fra.cloud.appwrite.io/v1')
+      .setProject('68847c040002eee8efb0');
+    const account = new Account(client);
+
+    // DOM Elements
+    const registerForm = document.getElementById('registerForm');
+    const emailInput = document.getElementById('regEmail');
+    const passwordInput = document.getElementById('regPassword');
+    const passwordToggle = document.getElementById('passwordToggle');
+    const passwordStrengthBar = document.getElementById('passwordStrengthBar');
+    const passwordStrengthText = document.getElementById('passwordStrengthText');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    const btnRegister = document.getElementById('btnRegister');
+    const messageContainer = document.getElementById('messageContainer');
+
+    // Password visibility toggle
+    passwordToggle.addEventListener('click', () => {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      passwordToggle.querySelector('i').classList.toggle('fa-eye');
+      passwordToggle.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+
+    // Password strength indicator
+    passwordInput.addEventListener('input', checkPasswordStrength);
+    
+    function checkPasswordStrength() {
+      const password = passwordInput.value;
+      let strength = 0;
+      let message = '';
+      
+      // Check password length
+      if (password.length > 5) strength += 1;
+      
+      // Check for mixed case
+      if (password.match(/([a-z].*[A-Z])|([A-Z].*[a-z])/)) strength += 1;
+      
+      // Check for numbers
+      if (password.match(/([0-9])/)) strength += 1;
+      
+      // Check for special chars
+      if (password.match(/([!,@,#,$,%,^,&,*,?,_,~])/)) strength += 1;
+      
+      // Update UI
+      switch(strength) {
+        case 0:
+          passwordStrengthBar.className = 'password-strength-bar';
+          passwordStrengthText.textContent = 'Password strength';
+          break;
+        case 1:
+          passwordStrengthBar.className = 'password-strength-bar strength-weak';
+          passwordStrengthText.textContent = 'Weak password';
+          passwordStrengthText.style.color = 'var(--error)';
+          break;
+        case 2:
+          passwordStrengthBar.className = 'password-strength-bar strength-medium';
+          passwordStrengthText.textContent = 'Medium strength';
+          passwordStrengthText.style.color = 'var(--warning)';
+          break;
+        case 3:
+          passwordStrengthBar.className = 'password-strength-bar strength-medium';
+          passwordStrengthText.textContent = 'Good password';
+          passwordStrengthText.style.color = 'var(--warning)';
+          break;
+        case 4:
+          passwordStrengthBar.className = 'password-strength-bar strength-strong';
+          passwordStrengthText.textContent = 'Strong password';
+          passwordStrengthText.style.color = 'var(--success)';
+          break;
+      }
+    }
+
+    // Form validation and submission
+    registerForm.addEventListener('submit', handleRegister);
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      
+      // Reset errors
+      emailError.classList.add('hidden');
+      passwordError.classList.add('hidden');
+      
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      
+      let isValid = true;
+      
+      // Validate email
+      if (!email) {
+        showError(emailError, 'Email is required');
+        isValid = false;
+      } else if (!isValidEmail(email)) {
+        showError(emailError, 'Please enter a valid email address');
+        isValid = false;
+      }
+      
+      // Validate password
+      if (!password) {
+        showError(passwordError, 'Password is required');
+        isValid = false;
+      } else if (password.length < 6) {
+        showError(passwordError, 'Password must be at least 6 characters');
+        isValid = false;
+      }
+      
+      if (!isValid) return;
+      
+      // Show loading state
+      setLoadingState(true);
+      
+      try {
+        await account.create(ID.unique(), email, password);
+        showMessage('Registration successful! Please check your email to verify your account.', 'success');
+        registerForm.reset();
+        passwordStrengthBar.className = 'password-strength-bar';
+        passwordStrengthText.textContent = 'Password strength';
+        passwordStrengthText.style.color = 'var(--text-secondary)';
+      } catch (error) {
+        showMessage('Registration error: ' + (error.message || error), 'error');
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function showError(element, message) {
+      element.textContent = message;
+      element.classList.remove('hidden');
+    }
+
+    function setLoadingState(isLoading) {
+      if (isLoading) {
+        btnRegister.disabled = true;
+        btnRegister.classList.add('btn-loading');
+        btnRegister.innerHTML = '<div class="spinner"></div><span>Processing...</span>';
+      } else {
+        btnRegister.disabled = false;
+        btnRegister.classList.remove('btn-loading');
+        btnRegister.innerHTML = '<span>Create account</span>';
+      }
+    }
+
+    function showMessage(message, type) {
+      const messageEl = document.createElement('div');
+      messageEl.className = `message message-${type}`;
+      messageEl.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        <span>${message}</span>
+      `;
+      
+      messageContainer.innerHTML = '';
+      messageContainer.appendChild(messageEl);
+      
+      // Auto dismiss after 5 seconds for success messages
+      if (type === 'success') {
+        setTimeout(() => {
+          messageEl.style.opacity = '0';
+          messageEl.style.transition = 'opacity 0.5s ease';
+          setTimeout(() => messageEl.remove(), 500);
+        }, 5000);
+      }
+    }
+  </script>
+</body>
+</html>
