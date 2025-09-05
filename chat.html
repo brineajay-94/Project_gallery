@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Friend Call</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.875rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--radius);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-error {
+            color: var(--danger);
+        }
+
+        .text-success {
+            color: var(--success);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Auth Section */
+        #auth-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            background-color: var(--light);
+            border: 1px solid var(--light-gray);
+        }
+
+        .auth-tab:first-child {
+            border-radius: var(--radius) 0 0 var(--radius);
+        }
+
+        .auth-tab:last-child {
+            border-radius: 0 var(--radius) var(--radius) 0;
+        }
+
+        .auth-tab.active {
+            background-color: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .auth-form {
+            padding: 20px;
+        }
+
+        /* Dashboard */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .dashboard-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .dashboard-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .dashboard-tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--danger);
+            border-radius: 50%;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .friend-list {
+            list-style: none;
+        }
+
+        .friend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .friend-item:last-child {
+            border-bottom: none;
+        }
+
+        .friend-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .call-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--success);
+        }
+
+        /* Call Interface */
+        #call-interface {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            height: 80vh;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .video-box {
+            flex: 1;
+            border-radius: var(--radius);
+            overflow: hidden;
+            position: relative;
+            background-color: #000;
+        }
+
+        .video-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: var(--white);
+            padding: 5px 10px;
+            border-radius: var(--radius);
+        }
+
+        .call-actions {
+            margin-top: 20px;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-title {
+            font-weight: 600;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .incoming-call {
+            border-left: 4px solid var(--success);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .video-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .video-box {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Section -->
+    <section id="auth-section">
+        <div class="auth-container card">
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="login-tab">Login</div>
+                <div class="auth-tab" id="register-tab">Register</div>
+            </div>
+            
+            <div class="auth-form">
+                <div class="form-group">
+                    <input type="email" id="email" class="form-control" placeholder="Email">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" class="form-control" placeholder="Password">
+                </div>
+                <div class="form-group hidden" id="username-group">
+                    <input type="text" id="username" class="form-control" placeholder="Username">
+                </div>
+                <div id="auth-error" class="text-error"></div>
+                <button id="login-btn" class="btn btn-primary">Login</button>
+                <button id="register-btn" class="btn btn-primary">Register</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard-section" class="hidden">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2>Dashboard <span class="user-name" id="user-name"></span></h2>
+                <button id="logout-btn" class="btn btn-danger">Logout</button>
+            </div>
+
+            <div class="dashboard-tabs">
+                <div class="dashboard-tab active" data-tab="friends">
+                    Friends
+                </div>
+                <div class="dashboard-tab" data-tab="requests">
+                    Friend Requests <span class="notification-dot hidden" id="request-dot"></span>
+                </div>
+                <div class="dashboard-tab" data-tab="add-friend">
+                    Add Friend
+                </div>
+            </div>
+
+            <div class="tab-content active" id="friends-tab">
+                <div class="card">
+                    <h3>Your Friends</h3>
+                    <ul class="friend-list" id="friends-list">
+                        <!-- Friends will be listed here -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tab-content" id="requests-tab">
+                <div class="card">
+                    <h3>Received Friend Requests</h3>
+                    <ul class="friend-list" id="requests-list">
+                        <!-- Friend requests will be listed here -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tab-content" id="add-friend-tab">
+                <div class="card">
+                    <h3>Add Friend by Username</h3>
+                    <div class="form-group">
+                        <input type="text" id="friend-username" class="form-control" placeholder="Friend's Username">
+                    </div>
+                    <button id="send-request-btn" class="btn btn-primary">Send Friend Request</button>
+                    <div id="add-friend-message"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call Interface -->
+    <div id="call-interface" class="hidden">
+        <div class="video-container">
+            <div class="video-box">
+                <video id="local-video" autoplay muted></video>
+                <div class="video-label" id="local-label">You</div>
+            </div>
+            <div class="video-box">
+                <video id="remote-video" autoplay></video>
+                <div class="video-label" id="remote-label">Friend</div>
+            </div>
+        </div>
+        <div class="call-actions">
+            <button id="end-call-btn" class="btn btn-danger">End Call</button>
+        </div>
+    </div>
+
+    <!-- Incoming Call Notification -->
+    <div id="incoming-call-notification" class="notification hidden incoming-call">
+        <div class="notification-header">
+            <div class="notification-title">Incoming Call from <span id="caller-username"></span></div>
+        </div>
+        <div class="notification-actions">
+            <button id="accept-call-btn" class="btn btn-success btn-sm">Accept</button>
+            <button id="reject-call-btn" class="btn btn-danger btn-sm">Reject</button>
+        </div>
+    </div>
+
+    <!-- Firebase and App Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        // Firebase configuration - Replace with your actual config
+        const firebaseConfig = {
+  apiKey: "AIzaSyAc3anQtateetNNwZsTmBq0vLJyuebqa8Y",
+  authDomain: "video-calling-4202d.firebaseapp.com",
+  projectId: "video-calling-4202d",
+  storageBucket: "video-calling-4202d.firebasestorage.app",
+  messagingSenderId: "88580644529",
+  appId: "1:88580644529:web:8568b79ba016d03c99cc90",
+  measurementId: "G-H7WMKY2QP1"
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // App state
+        let currentUser = null;
+        let currentUsername = null;
+        let friends = [];
+        let friendRequests = [];
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let callStatus = 'idle'; // 'idle', 'calling', 'incoming', 'in-call'
+        let currentCallerId = null;
+        let currentCallId = null;
+
+        // ICE servers configuration for WebRTC
+        const iceServers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // DOM Elements
+        const authSection = document.getElementById('auth-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const usernameGroup = document.getElementById('username-group');
+        const usernameInput = document.getElementById('username');
+        const authError = document.getElementById('auth-error');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userNameSpan = document.getElementById('user-name');
+        const friendsList = document.getElementById('friends-list');
+        const requestsList = document.getElementById('requests-list');
+        const requestDot = document.getElementById('request-dot');
+        const friendUsernameInput = document.getElementById('friend-username');
+        const sendRequestBtn = document.getElementById('send-request-btn');
+        const addFriendMessage = document.getElementById('add-friend-message');
+        const callInterface = document.getElementById('call-interface');
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        const localLabel = document.getElementById('local-label');
+        const remoteLabel = document.getElementById('remote-label');
+        const endCallBtn = document.getElementById('end-call-btn');
+        const incomingCallNotification = document.getElementById('incoming-call-notification');
+        const callerUsernameSpan = document.getElementById('caller-username');
+        const acceptCallBtn = document.getElementById('accept-call-btn');
+        const rejectCallBtn = document.getElementById('reject-call-btn');
+        const dashboardTabs = document.querySelectorAll('.dashboard-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Event Listeners
+        loginTab.addEventListener('click', () => switchAuthTab('login'));
+        registerTab.addEventListener('click', () => switchAuthTab('register'));
+        loginBtn.addEventListener('click', loginUser);
+        registerBtn.addEventListener('click', registerUser);
+        logoutBtn.addEventListener('click', logoutUser);
+        sendRequestBtn.addEventListener('click', sendFriendRequest);
+        endCallBtn.addEventListener('click', endCall);
+        acceptCallBtn.addEventListener('click', acceptCall);
+        rejectCallBtn.addEventListener('click', rejectCall);
+
+        // Tab switching for dashboard
+        dashboardTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                switchDashboardTab(tabId);
+            });
+        });
+
+        // Auth state observer
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                database.ref(`users/${user.uid}`).once('value')
+                    .then(snap => {
+                        const userData = snap.val();
+                        if (userData) {
+                            currentUsername = userData.username;
+                            userNameSpan.textContent = currentUsername;
+                        }
+                    })
+                    .then(() => {
+                        authSection.classList.add('hidden');
+                        dashboardSection.classList.remove('hidden');
+                        setupUserDataListeners();
+                    });
+            } else {
+                currentUser = null;
+                currentUsername = null;
+                dashboardSection.classList.add('hidden');
+                authSection.classList.remove('hidden');
+                removeUserDataListeners();
+            }
+        });
+
+        // Functions
+        function switchAuthTab(tab) {
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginBtn.classList.remove('hidden');
+                registerBtn.classList.add('hidden');
+                usernameGroup.classList.add('hidden');
+            } else {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerBtn.classList.remove('hidden');
+                loginBtn.classList.add('hidden');
+                usernameGroup.classList.remove('hidden');
+            }
+        }
+
+        function switchDashboardTab(tabId) {
+            // Update active tab
+            dashboardTabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // Update active content
+            tabContents.forEach(content => {
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+
+            // If switching to requests tab, remove notification dot
+            if (tabId === 'requests') {
+                requestDot.classList.add('hidden');
+            }
+        }
+
+        function loginUser() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    authError.textContent = '';
+                })
+                .catch(error => {
+                    handleAuthError(error);
+                });
+        }
+
+        function registerUser() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const username = usernameInput.value.trim();
+            
+            if (!username) {
+                authError.textContent = 'Please enter a username.';
+                return;
+            }
+
+            // Check if username is taken
+            database.ref(`usernames/${username}`).once('value')
+                .then(snap => {
+                    if (snap.exists()) {
+                        authError.textContent = 'Username is already taken.';
+                        return;
+                    }
+
+                    // Proceed to create user
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .then(userCredential => {
+                            const user = userCredential.user;
+                            // Set user data
+                            database.ref(`users/${user.uid}`).set({
+                                email: email,
+                                username: username
+                            })
+                            .then(() => {
+                                database.ref(`usernames/${username}`).set(user.uid);
+                                authError.textContent = '';
+                            })
+                            .catch(error => {
+                                console.error('Error setting user data:', error);
+                            });
+                        })
+                        .catch(error => {
+                            handleAuthError(error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error checking username:', error);
+                });
+        }
+
+        function handleAuthError(error) {
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    authError.textContent = 'Invalid email address.';
+                    break;
+                case 'auth/user-disabled':
+                    authError.textContent = 'User account is disabled.';
+                    break;
+                case 'auth/user-not-found':
+                    authError.textContent = 'User not found.';
+                    break;
+                case 'auth/wrong-password':
+                    authError.textContent = 'Incorrect password.';
+                    break;
+                case 'auth/email-already-in-use':
+                    authError.textContent = 'Email is already registered.';
+                    break;
+                case 'auth/weak-password':
+                    authError.textContent = 'Password is too weak.';
+                    break;
+                default:
+                    authError.textContent = 'An error occurred. Please try again.';
+            }
+        }
+
+        function logoutUser() {
+            // End call if active
+            if (callStatus !== 'idle') {
+                endCall();
+            }
+            
+            auth.signOut()
+                .then(() => {
+                    friends = [];
+                    friendRequests = [];
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                });
+        }
+
+        function setupUserDataListeners() {
+            // Listen for friends list changes
+            database.ref(`users/${currentUser.uid}/friends`).on('value', snapshot => {
+                friends = [];
+                const friendsData = snapshot.val();
+                
+                if (friendsData) {
+                    Object.keys(friendsData).forEach(friendId => {
+                        if (friendsData[friendId] === 'accepted') {
+                            // Get friend details
+                            database.ref(`users/${friendId}`).once('value')
+                                .then(friendSnapshot => {
+                                    const friendData = friendSnapshot.val();
+                                    if (friendData) {
+                                        friends.push({
+                                            id: friendId,
+                                            username: friendData.username
+                                        });
+                                        renderFriendsList();
+                                    }
+                                });
+                        }
+                    });
+                } else {
+                    renderFriendsList();
+                }
+            });
+
+            // Listen for incoming friend requests
+            database.ref(`users/${currentUser.uid}/friendRequests`).on('value', snapshot => {
+                friendRequests = [];
+                const requestsData = snapshot.val();
+                
+                if (requestsData) {
+                    Object.keys(requestsData).forEach(requesterId => {
+                        if (requestsData[requesterId] === 'pending') {
+                            // Get requester details
+                            database.ref(`users/${requesterId}`).once('value')
+                                .then(requesterSnapshot => {
+                                    const requesterData = requesterSnapshot.val();
+                                    if (requesterData) {
+                                        friendRequests.push({
+                                            id: requesterId,
+                                            username: requesterData.username
+                                        });
+                                        renderFriendRequests();
+                                        
+                                        // Show notification dot if there are pending requests
+                                        if (friendRequests.length > 0) {
+                                            requestDot.classList.remove('hidden');
+                                        }
+                                    }
+                                });
+                        }
+                    });
+                } else {
+                    renderFriendRequests();
+                }
+            });
+
+            // Listen for incoming calls
+            database.ref(`users/${currentUser.uid}/incomingCalls`).on('child_added', snapshot => {
+                if (callStatus === 'idle') {
+                    const callData = snapshot.val();
+                    currentCallId = snapshot.key;
+                    currentCallerId = callData.callerId;
+                    
+                    // Get caller username
+                    database.ref(`users/${callData.callerId}`).once('value')
+                        .then(callerSnapshot => {
+                            const callerData = callerSnapshot.val();
+                            if (callerData) {
+                                callerUsernameSpan.textContent = callerData.username;
+                                callStatus = 'incoming';
+                                incomingCallNotification.classList.remove('hidden');
+                            }
+                        });
+                }
+            });
+
+            // Listen for call cancellation
+            database.ref(`users/${currentUser.uid}/incomingCalls`).on('child_removed', snapshot => {
+                if (callStatus === 'incoming' && snapshot.key === currentCallId) {
+                    incomingCallNotification.classList.add('hidden');
+                    callStatus = 'idle';
+                    currentCallId = null;
+                    currentCallerId = null;
+                }
+            });
+        }
+
+        function removeUserDataListeners() {
+            if (currentUser) {
+                database.ref(`users/${currentUser.uid}/friends`).off();
+                database.ref(`users/${currentUser.uid}/friendRequests`).off();
+                database.ref(`users/${currentUser.uid}/incomingCalls`).off();
+            }
+        }
+
+        function renderFriendsList() {
+            friendsList.innerHTML = '';
+            
+            if (friends.length === 0) {
+                friendsList.innerHTML = '<li class="friend-item">No friends yet.</li>';
+                return;
+            }
+            
+            friends.forEach(friend => {
+                const li = document.createElement('li');
+                li.className = 'friend-item';
+                li.innerHTML = `
+                    <div>${friend.username}</div>
+                    <div class="friend-actions">
+                        <span class="call-icon" data-friend-id="${friend.id}" data-friend-username="${friend.username}">📞</span>
+                    </div>
+                `;
+                friendsList.appendChild(li);
+            });
+            
+            // Add event listeners to call buttons
+            document.querySelectorAll('.call-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const friendId = this.getAttribute('data-friend-id');
+                    const friendUsername = this.getAttribute('data-friend-username');
+                    startCall(friendId, friendUsername);
+                });
+            });
+        }
+
+        function renderFriendRequests() {
+            requestsList.innerHTML = '';
+            
+            if (friendRequests.length === 0) {
+                requestsList.innerHTML = '<li class="friend-item">No pending requests.</li>';
+                return;
+            }
+            
+            friendRequests.forEach(request => {
+                const li = document.createElement('li');
+                li.className = 'friend-item';
+                li.innerHTML = `
+                    <div>${request.username}</div>
+                    <div class="friend-actions">
+                        <button class="btn btn-success btn-sm accept-request" data-requester-id="${request.id}">Accept</button>
+                        <button class="btn btn-danger btn-sm reject-request" data-requester-id="${request.id}">Reject</button>
+                    </div>
+                `;
+                requestsList.appendChild(li);
+            });
+            
+            // Add event listeners to accept/reject buttons
+            document.querySelectorAll('.accept-request').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const requesterId = this.getAttribute('data-requester-id');
+                    acceptFriendRequest(requesterId);
+                });
+            });
+            
+            document.querySelectorAll('.reject-request').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const requesterId = this.getAttribute('data-requester-id');
+                    rejectFriendRequest(requesterId);
+                });
+            });
+        }
+
+        function sendFriendRequest() {
+            const friendUsername = friendUsernameInput.value.trim();
+            
+            if (!friendUsername) {
+                addFriendMessage.textContent = 'Please enter a username.';
+                addFriendMessage.className = 'text-error';
+                return;
+            }
+            
+            if (friendUsername === currentUsername) {
+                addFriendMessage.textContent = 'You cannot add yourself as a friend.';
+                addFriendMessage.className = 'text-error';
+                return;
+            }
+            
+            // Find user by username
+            database.ref(`usernames/${friendUsername}`).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        const friendId = snapshot.val();
+                        
+                        // Check if already friends
+                        database.ref(`users/${currentUser.uid}/friends/${friendId}`).once('value')
+                            .then(friendSnapshot => {
+                                if (friendSnapshot.exists() && friendSnapshot.val() === 'accepted') {
+                                    addFriendMessage.textContent = 'You are already friends with this user.';
+                                    addFriendMessage.className = 'text-error';
+                                    return;
+                                }
+                                
+                                // Check if request already sent
+                                database.ref(`users/${friendId}/friendRequests/${currentUser.uid}`).once('value')
+                                    .then(requestSnapshot => {
+                                        if (requestSnapshot.exists() && requestSnapshot.val() === 'pending') {
+                                            addFriendMessage.textContent = 'Friend request already sent.';
+                                            addFriendMessage.className = 'text-error';
+                                            return;
+                                        }
+                                        
+                                        // Send friend request
+                                        database.ref(`users/${friendId}/friendRequests/${currentUser.uid}`).set('pending')
+                                            .then(() => {
+                                                addFriendMessage.textContent = 'Friend request sent!';
+                                                addFriendMessage.className = 'text-success';
+                                                friendUsernameInput.value = '';
+                                            })
+                                            .catch(error => {
+                                                addFriendMessage.textContent = 'Error sending friend request.';
+                                                addFriendMessage.className = 'text-error';
+                                                console.error('Error sending friend request:', error);
+                                            });
+                                    });
+                            });
+                    } else {
+                        addFriendMessage.textContent = 'User not found.';
+                        addFriendMessage.className = 'text-error';
+                    }
+                })
+                .catch(error => {
+                    addFriendMessage.textContent = 'Error finding user.';
+                    addFriendMessage.className = 'text-error';
+                    console.error('Error finding user:', error);
+                });
+        }
+
+        function acceptFriendRequest(requesterId) {
+            // Update both users' friend lists
+            const updates = {};
+            updates[`users/${currentUser.uid}/friends/${requesterId}`] = 'accepted';
+            updates[`users/${requesterId}/friends/${currentUser.uid}`] = 'accepted';
+            
+            // Remove the request
+            updates[`users/${currentUser.uid}/friendRequests/${requesterId}`] = null;
+            
+            database.ref().update(updates)
+                .catch(error => {
+                    console.error('Error accepting friend request:', error);
+                });
+        }
+
+        function rejectFriendRequest(requesterId) {
+            // Remove the request
+            database.ref(`users/${currentUser.uid}/friendRequests/${requesterId}`).remove()
+                .catch(error => {
+                    console.error('Error rejecting friend request:', error);
+                });
+        }
+
+        function startCall(friendId, friendUsername) {
+            if (callStatus !== 'idle') {
+                alert('You are already in a call.');
+                return;
+            }
+            
+            callStatus = 'calling';
+            
+            // Create peer connection
+            createPeerConnection();
+            
+            // Get user media
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    localStream = stream;
+                    localVideo.srcObject = stream;
+                    
+                    // Add local stream to peer connection
+                    stream.getTracks().forEach(track => {
+                        peerConnection.addTrack(track, stream);
+                    });
+                    
+                    // Create offer
+                    return peerConnection.createOffer();
+                })
+                .then(offer => {
+                    return peerConnection.setLocalDescription(offer);
+                })
+                .then(() => {
+                    // Send offer to friend
+                    const callId = database.ref(`calls`).push().key;
+                    currentCallId = callId;
+                    
+                    database.ref(`users/${friendId}/incomingCalls/${callId}`).set({
+                        callerId: currentUser.uid,
+                        offer: peerConnection.localDescription
+                    });
+                    
+                    // Listen for answer
+                    database.ref(`calls/${callId}/answer`).on('value', snapshot => {
+                        if (snapshot.exists() && peerConnection.remoteDescription === null) {
+                            const answer = snapshot.val();
+                            peerConnection.setRemoteDescription(answer)
+                                .catch(error => {
+                                    console.error('Error setting remote description:', error);
+                                });
+                        }
+                    });
+                    
+                    // Show calling interface
+                    callInterface.classList.remove('hidden');
+                    localLabel.textContent = currentUsername;
+                    remoteLabel.textContent = friendUsername;
+                })
+                .catch(error => {
+                    console.error('Error starting call:', error);
+                    endCall();
+                });
+        }
+
+        function acceptCall() {
+            if (callStatus !== 'incoming' || !currentCallId || !currentCallerId) {
+                return;
+            }
+            
+            callStatus = 'in-call';
+            incomingCallNotification.classList.add('hidden');
+            
+            // Create peer connection
+            createPeerConnection();
+            
+            // Get the offer and caller username
+            let callerUsername;
+            database.ref(`users/${currentUser.uid}/incomingCalls/${currentCallId}`).once('value')
+                .then(snapshot => {
+                    const callData = snapshot.val();
+                    return database.ref(`users/${callData.callerId}`).once('value')
+                        .then(callerSnapshot => {
+                            const callerData = callerSnapshot.val();
+                            callerUsername = callerData.username;
+                            return peerConnection.setRemoteDescription(callData.offer);
+                        });
+                })
+                .then(() => {
+                    // Get user media
+                    return navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                })
+                .then(stream => {
+                    localStream = stream;
+                    localVideo.srcObject = stream;
+                    
+                    // Add local stream to peer connection
+                    stream.getTracks().forEach(track => {
+                        peerConnection.addTrack(track, stream);
+                    });
+                    
+                    // Create answer
+                    return peerConnection.createAnswer();
+                })
+                .then(answer => {
+                    return peerConnection.setLocalDescription(answer);
+                })
+                .then(() => {
+                    // Send answer to caller
+                    database.ref(`calls/${currentCallId}/answer`).set(peerConnection.localDescription);
+                    
+                    // Remove incoming call notification
+                    database.ref(`users/${currentUser.uid}/incomingCalls/${currentCallId}`).remove();
+                    
+                    // Show calling interface
+                    callInterface.classList.remove('hidden');
+                    localLabel.textContent = currentUsername;
+                    remoteLabel.textContent = callerUsername;
+                })
+                .catch(error => {
+                    console.error('Error accepting call:', error);
+                    endCall();
+                });
+        }
+
+        function rejectCall() {
+            if (callStatus !== 'incoming' || !currentCallId) {
+                return;
+            }
+            
+            // Remove incoming call notification
+            database.ref(`users/${currentUser.uid}/incomingCalls/${currentCallId}`).remove();
+            
+            incomingCallNotification.classList.add('hidden');
+            callStatus = 'idle';
+            currentCallId = null;
+            currentCallerId = null;
+        }
+
+        function endCall() {
+            // Close peer connection
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            
+            // Stop local stream
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+                localVideo.srcObject = null;
+            }
+            
+            // Reset remote video
+            remoteVideo.srcObject = null;
+            
+            // Hide call interface
+            callInterface.classList.add('hidden');
+            
+            // Clean up call data
+            if (currentCallId) {
+                if (currentCallerId) {
+                    // Notify the caller that the call was ended
+                    database.ref(`users/${currentCallerId}/incomingCalls/${currentCallId}`).remove();
+                }
+                
+                database.ref(`calls/${currentCallId}`).remove();
+                currentCallId = null;
+            }
+            
+            currentCallerId = null;
+            callStatus = 'idle';
+        }
+
+        function createPeerConnection() {
+            peerConnection = new RTCPeerConnection(iceServers);
+            
+            // Handle remote stream
+            peerConnection.ontrack = event => {
+                remoteStream = event.streams[0];
+                remoteVideo.srcObject = remoteStream;
+            };
+            
+            // Handle ICE candidates
+            peerConnection.onicecandidate = event => {
+                if (event.candidate && currentCallId) {
+                    database.ref(`calls/${currentCallId}/iceCandidates`).push({
+                        candidate: event.candidate,
+                        userId: currentUser.uid
+                    });
+                }
+            };
+            
+            // Listen for remote ICE candidates
+            if (currentCallId) {
+                database.ref(`calls/${currentCallId}/iceCandidates`).on('child_added', snapshot => {
+                    const candidateData = snapshot.val();
+                    
+                    if (candidateData.userId !== currentUser.uid) {
+                        peerConnection.addIceCandidate(candidateData.candidate)
+                            .catch(error => {
+                                console.error('Error adding ICE candidate:', error);
+                            });
+                    }
+                });
+            }
+        }
+
+        // Initialize the app
+        switchAuthTab('login');
+    </script>
+</body>
+</html>
