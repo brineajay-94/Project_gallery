@@ -466,16 +466,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script>
-        // Firebase configuration - Replace with your actual config
+        // Firebase configuration
         const firebaseConfig = {
-  apiKey: "AIzaSyAc3anQtateetNNwZsTmBq0vLJyuebqa8Y",
-  authDomain: "video-calling-4202d.firebaseapp.com",
-  projectId: "video-calling-4202d",
-  storageBucket: "video-calling-4202d.firebasestorage.app",
-  messagingSenderId: "88580644529",
-  appId: "1:88580644529:web:8568b79ba016d03c99cc90",
-  measurementId: "G-H7WMKY2QP1"
-};
+            apiKey: "AIzaSyAc3anQtateetNNwZsTmBq0vLJyuebqa8Y",
+            authDomain: "video-calling-4202d.firebaseapp.com",
+            projectId: "video-calling-4202d",
+            storageBucket: "video-calling-4202d.firebasestorage.app",
+            messagingSenderId: "88580644529",
+            appId: "1:88580644529:web:8568b79ba016d03c99cc90",
+            measurementId: "G-H7WMKY2QP1"
+        };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
@@ -598,7 +598,6 @@
         }
 
         function switchDashboardTab(tabId) {
-            // Update active tab
             dashboardTabs.forEach(tab => {
                 if (tab.getAttribute('data-tab') === tabId) {
                     tab.classList.add('active');
@@ -607,7 +606,6 @@
                 }
             });
 
-            // Update active content
             tabContents.forEach(content => {
                 if (content.id === `${tabId}-tab`) {
                     content.classList.add('active');
@@ -616,7 +614,6 @@
                 }
             });
 
-            // If switching to requests tab, remove notification dot
             if (tabId === 'requests') {
                 requestDot.classList.add('hidden');
             }
@@ -645,7 +642,6 @@
                 return;
             }
 
-            // Check if username is taken
             database.ref(`usernames/${username}`).once('value')
                 .then(snap => {
                     if (snap.exists()) {
@@ -653,11 +649,9 @@
                         return;
                     }
 
-                    // Proceed to create user
                     auth.createUserWithEmailAndPassword(email, password)
                         .then(userCredential => {
                             const user = userCredential.user;
-                            // Set user data
                             database.ref(`users/${user.uid}`).set({
                                 email: email,
                                 username: username
@@ -705,7 +699,6 @@
         }
 
         function logoutUser() {
-            // End call if active
             if (callStatus !== 'idle') {
                 endCall();
             }
@@ -721,7 +714,6 @@
         }
 
         function setupUserDataListeners() {
-            // Listen for friends list changes
             database.ref(`users/${currentUser.uid}/friends`).on('value', snapshot => {
                 friends = [];
                 const friendsData = snapshot.val();
@@ -729,7 +721,6 @@
                 if (friendsData) {
                     Object.keys(friendsData).forEach(friendId => {
                         if (friendsData[friendId] === 'accepted') {
-                            // Get friend details
                             database.ref(`users/${friendId}`).once('value')
                                 .then(friendSnapshot => {
                                     const friendData = friendSnapshot.val();
@@ -748,7 +739,6 @@
                 }
             });
 
-            // Listen for incoming friend requests
             database.ref(`users/${currentUser.uid}/friendRequests`).on('value', snapshot => {
                 friendRequests = [];
                 const requestsData = snapshot.val();
@@ -756,7 +746,6 @@
                 if (requestsData) {
                     Object.keys(requestsData).forEach(requesterId => {
                         if (requestsData[requesterId] === 'pending') {
-                            // Get requester details
                             database.ref(`users/${requesterId}`).once('value')
                                 .then(requesterSnapshot => {
                                     const requesterData = requesterSnapshot.val();
@@ -767,7 +756,6 @@
                                         });
                                         renderFriendRequests();
                                         
-                                        // Show notification dot if there are pending requests
                                         if (friendRequests.length > 0) {
                                             requestDot.classList.remove('hidden');
                                         }
@@ -780,14 +768,12 @@
                 }
             });
 
-            // Listen for incoming calls
             database.ref(`users/${currentUser.uid}/incomingCalls`).on('child_added', snapshot => {
                 if (callStatus === 'idle') {
                     const callData = snapshot.val();
                     currentCallId = snapshot.key;
                     currentCallerId = callData.callerId;
                     
-                    // Get caller username
                     database.ref(`users/${callData.callerId}`).once('value')
                         .then(callerSnapshot => {
                             const callerData = callerSnapshot.val();
@@ -800,7 +786,6 @@
                 }
             });
 
-            // Listen for call cancellation
             database.ref(`users/${currentUser.uid}/incomingCalls`).on('child_removed', snapshot => {
                 if (callStatus === 'incoming' && snapshot.key === currentCallId) {
                     incomingCallNotification.classList.add('hidden');
@@ -839,7 +824,6 @@
                 friendsList.appendChild(li);
             });
             
-            // Add event listeners to call buttons
             document.querySelectorAll('.call-icon').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const friendId = this.getAttribute('data-friend-id');
@@ -870,7 +854,6 @@
                 requestsList.appendChild(li);
             });
             
-            // Add event listeners to accept/reject buttons
             document.querySelectorAll('.accept-request').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const requesterId = this.getAttribute('data-requester-id');
@@ -901,13 +884,11 @@
                 return;
             }
             
-            // Find user by username
             database.ref(`usernames/${friendUsername}`).once('value')
                 .then(snapshot => {
                     if (snapshot.exists()) {
                         const friendId = snapshot.val();
                         
-                        // Check if already friends
                         database.ref(`users/${currentUser.uid}/friends/${friendId}`).once('value')
                             .then(friendSnapshot => {
                                 if (friendSnapshot.exists() && friendSnapshot.val() === 'accepted') {
@@ -916,7 +897,6 @@
                                     return;
                                 }
                                 
-                                // Check if request already sent
                                 database.ref(`users/${friendId}/friendRequests/${currentUser.uid}`).once('value')
                                     .then(requestSnapshot => {
                                         if (requestSnapshot.exists() && requestSnapshot.val() === 'pending') {
@@ -925,7 +905,6 @@
                                             return;
                                         }
                                         
-                                        // Send friend request
                                         database.ref(`users/${friendId}/friendRequests/${currentUser.uid}`).set('pending')
                                             .then(() => {
                                                 addFriendMessage.textContent = 'Friend request sent!';
@@ -952,12 +931,9 @@
         }
 
         function acceptFriendRequest(requesterId) {
-            // Update both users' friend lists
             const updates = {};
             updates[`users/${currentUser.uid}/friends/${requesterId}`] = 'accepted';
             updates[`users/${requesterId}/friends/${currentUser.uid}`] = 'accepted';
-            
-            // Remove the request
             updates[`users/${currentUser.uid}/friendRequests/${requesterId}`] = null;
             
             database.ref().update(updates)
@@ -967,7 +943,6 @@
         }
 
         function rejectFriendRequest(requesterId) {
-            // Remove the request
             database.ref(`users/${currentUser.uid}/friendRequests/${requesterId}`).remove()
                 .catch(error => {
                     console.error('Error rejecting friend request:', error);
@@ -981,6 +956,7 @@
             }
             
             callStatus = 'calling';
+            currentCallerId = friendId;
             
             // Create peer connection
             createPeerConnection();
@@ -988,22 +964,22 @@
             // Get user media
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
+                    console.log('Got local stream');
                     localStream = stream;
                     localVideo.srcObject = stream;
                     
-                    // Add local stream to peer connection
                     stream.getTracks().forEach(track => {
                         peerConnection.addTrack(track, stream);
                     });
                     
-                    // Create offer
                     return peerConnection.createOffer();
                 })
                 .then(offer => {
+                    console.log('Created offer:', offer);
                     return peerConnection.setLocalDescription(offer);
                 })
                 .then(() => {
-                    // Send offer to friend
+                    console.log('Local description set');
                     const callId = database.ref(`calls`).push().key;
                     currentCallId = callId;
                     
@@ -1012,18 +988,25 @@
                         offer: peerConnection.localDescription
                     });
                     
-                    // Listen for answer
                     database.ref(`calls/${callId}/answer`).on('value', snapshot => {
-                        if (snapshot.exists() && peerConnection.remoteDescription === null) {
+                        if (snapshot.exists() && peerConnection.signalingState === 'have-local-offer') {
                             const answer = snapshot.val();
-                            peerConnection.setRemoteDescription(answer)
+                            console.log('Received answer:', answer);
+                            peerConnection.setRemoteDescription(new RTCSessionDescription(answer))
+                                .then(() => {
+                                    console.log('Remote description set for caller');
+                                    callStatus = 'in-call';
+                                    callInterface.classList.remove('hidden');
+                                    localLabel.textContent = currentUsername;
+                                    remoteLabel.textContent = friendUsername;
+                                })
                                 .catch(error => {
                                     console.error('Error setting remote description:', error);
+                                    endCall();
                                 });
                         }
                     });
                     
-                    // Show calling interface
                     callInterface.classList.remove('hidden');
                     localLabel.textContent = currentUsername;
                     remoteLabel.textContent = friendUsername;
@@ -1036,54 +1019,57 @@
 
         function acceptCall() {
             if (callStatus !== 'incoming' || !currentCallId || !currentCallerId) {
+                console.error('Invalid call state for accepting:', { callStatus, currentCallId, currentCallerId });
                 return;
             }
             
             callStatus = 'in-call';
             incomingCallNotification.classList.add('hidden');
             
-            // Create peer connection
             createPeerConnection();
             
-            // Get the offer and caller username
             let callerUsername;
             database.ref(`users/${currentUser.uid}/incomingCalls/${currentCallId}`).once('value')
                 .then(snapshot => {
                     const callData = snapshot.val();
+                    if (!callData) {
+                        console.error('Call data not found');
+                        endCall();
+                        return;
+                    }
                     return database.ref(`users/${callData.callerId}`).once('value')
                         .then(callerSnapshot => {
                             const callerData = callerSnapshot.val();
-                            callerUsername = callerData.username;
-                            return peerConnection.setRemoteDescription(callData.offer);
+                            if (callerData) {
+                                callerUsername = callerData.username;
+                                return peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
+                            }
                         });
                 })
                 .then(() => {
-                    // Get user media
+                    console.log('Remote description set for callee');
                     return navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 })
                 .then(stream => {
+                    console.log('Got local stream for callee');
                     localStream = stream;
                     localVideo.srcObject = stream;
                     
-                    // Add local stream to peer connection
                     stream.getTracks().forEach(track => {
                         peerConnection.addTrack(track, stream);
                     });
                     
-                    // Create answer
                     return peerConnection.createAnswer();
                 })
                 .then(answer => {
+                    console.log('Created answer:', answer);
                     return peerConnection.setLocalDescription(answer);
                 })
                 .then(() => {
-                    // Send answer to caller
+                    console.log('Local description set for callee');
                     database.ref(`calls/${currentCallId}/answer`).set(peerConnection.localDescription);
-                    
-                    // Remove incoming call notification
                     database.ref(`users/${currentUser.uid}/incomingCalls/${currentCallId}`).remove();
                     
-                    // Show calling interface
                     callInterface.classList.remove('hidden');
                     localLabel.textContent = currentUsername;
                     remoteLabel.textContent = callerUsername;
@@ -1099,8 +1085,8 @@
                 return;
             }
             
-            // Remove incoming call notification
             database.ref(`users/${currentUser.uid}/incomingCalls/${currentCallId}`).remove();
+            database.ref(`calls/${currentCallId}`).remove();
             
             incomingCallNotification.classList.add('hidden');
             callStatus = 'idle';
@@ -1109,33 +1095,28 @@
         }
 
         function endCall() {
-            // Close peer connection
+            console.log('Ending call');
             if (peerConnection) {
                 peerConnection.close();
                 peerConnection = null;
             }
             
-            // Stop local stream
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
                 localVideo.srcObject = null;
             }
             
-            // Reset remote video
             remoteVideo.srcObject = null;
             
-            // Hide call interface
             callInterface.classList.add('hidden');
             
-            // Clean up call data
             if (currentCallId) {
-                if (currentCallerId) {
-                    // Notify the caller that the call was ended
+                if (currentCallerId && callStatus === 'in-call') {
                     database.ref(`users/${currentCallerId}/incomingCalls/${currentCallId}`).remove();
                 }
-                
                 database.ref(`calls/${currentCallId}`).remove();
+                database.ref(`users/${currentUser.uid}/incomingCalls/${currentCallId}`).remove();
                 currentCallId = null;
             }
             
@@ -1144,17 +1125,18 @@
         }
 
         function createPeerConnection() {
+            console.log('Creating peer connection');
             peerConnection = new RTCPeerConnection(iceServers);
             
-            // Handle remote stream
             peerConnection.ontrack = event => {
+                console.log('Received remote stream');
                 remoteStream = event.streams[0];
                 remoteVideo.srcObject = remoteStream;
             };
             
-            // Handle ICE candidates
             peerConnection.onicecandidate = event => {
                 if (event.candidate && currentCallId) {
+                    console.log('Sending ICE candidate');
                     database.ref(`calls/${currentCallId}/iceCandidates`).push({
                         candidate: event.candidate,
                         userId: currentUser.uid
@@ -1162,13 +1144,12 @@
                 }
             };
             
-            // Listen for remote ICE candidates
             if (currentCallId) {
                 database.ref(`calls/${currentCallId}/iceCandidates`).on('child_added', snapshot => {
                     const candidateData = snapshot.val();
-                    
                     if (candidateData.userId !== currentUser.uid) {
-                        peerConnection.addIceCandidate(candidateData.candidate)
+                        console.log('Adding ICE candidate:', candidateData.candidate);
+                        peerConnection.addIceCandidate(new RTCIceCandidate(candidateData.candidate))
                             .catch(error => {
                                 console.error('Error adding ICE candidate:', error);
                             });
